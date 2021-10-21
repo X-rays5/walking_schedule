@@ -22,6 +22,11 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
-      - run: cd App
-      - run: flutter pub get
-      - run: flutter build apk
+      
+      - name: Get packages
+        run: flutter pub get
+        working-directory: ${{github.workspace}}/App
+      
+      - name: Build Apk
+        run: flutter build apk
+        working-directory: ${{github.workspace}}/App
