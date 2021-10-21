@@ -22,5 +22,6 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
+      - run: cd App
       - run: flutter pub get
       - run: flutter build apk
