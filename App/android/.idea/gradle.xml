@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="testRunner" value="GRADLE" />
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$USER_HOME$/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/file_picker-4.1.5/android" />
+            <option value="$USER_HOME$/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth-0.14.0+9/android" />
+            <option value="$USER_HOME$/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core-0.4.4/android" />
+            <option value="$USER_HOME$/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_dynamic_links-0.5.3/android" />
+            <option value="$USER_HOME$/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_plugin_android_lifecycle-2.0.4/android" />
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/app" />
+          </set>
+        </option>
+        <option name="resolveModulePerSourceSet" value="false" />
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

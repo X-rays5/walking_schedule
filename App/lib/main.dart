@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
-import 'settings.dart';
-import 'users.dart';
-import 'calendar.dart';
+import 'home.dart';
 
-void main() => runApp(const App());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const App());
+}
 
 class App extends StatelessWidget {
   const App({Key? key}) : super(key: key);
@@ -22,81 +26,78 @@ class App extends StatelessWidget {
       ),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: HomePage(title: "Home"),
+      home: LoginPage(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  final String title;
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
 
-  HomePage({Key? key, required this.title}) : super(key: key);
+enum AuthState {
+  kLoggedOut,
+  kLoggedIn
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  AuthState _authState = AuthState.kLoggedOut;
+
+  _LoginPageState() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      setState(() {
+        if (user == null) {
+          _authState = AuthState.kLoggedOut;
+        } else {
+          _authState = AuthState.kLoggedIn;
+        }
+      });
+    });
+    FirebaseAuth.instance.idTokenChanges().listen((User? user) {
+      setState(() {
+        if (user == null) {
+          _authState = AuthState.kLoggedOut;
+        } else {
+          _authState = AuthState.kLoggedIn;
+        }
+      });
+    });
+  }
+
+  void _HandleSignIn() async {
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+
+    //Create Google Auth credentials to pass to Firebase
+    final OAuthCredential googleAuthCredential =
+    GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    //Authenticate against Firebase with Google credentials
+    await firebaseAuth.signInWithCredential(googleAuthCredential);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: login page
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          children: <Widget>[
-            Column(
-              children: [
-                Text("username"), //TODO: get username
-                const Divider(
-                  height: 20,
-                  thickness: 4,
-                  indent: 0,
-                  endIndent: 0,
-                ),
-              ],
-            ),
-            ListTile(
-              title: const Text("Calendar"),
-              leading: const Icon(Icons.calendar_today_rounded),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => Calendar()));
-              },
-            ),
-            ListTile(
-              title: const Text("Users"),
-              leading: const Icon(Icons.account_circle),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => Users()));
-              },
-            ),
-            ListTile(
-              title: const Text("Settings"),
-              leading: const Icon(Icons.settings),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => Settings()));
-              },
-            ),
-            ListTile(
-              title: const Text("Logout"),
-              leading: const Icon(Icons.logout),
-              onTap: (){_LogOut();},
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Center(child: Text(DateFormat('EEE d MMM').format(DateTime.now()),textAlign: TextAlign.center,style: new TextStyle(fontWeight: FontWeight.bold,fontSize: 25.0),)),
-        ],
-      ),
-    );
+    switch (_authState) {
+      case AuthState.kLoggedIn:
+        return HomePage(firebaseAuth);
+      case AuthState.kLoggedOut:
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Login"),
+          ),
+          body: Center(
+              child: Column(children: [
+                TextButton(onPressed: () {_HandleSignIn();}, child: const Text("Sign in")),
+                Text(firebaseAuth.currentUser != null ? firebaseAuth.currentUser!.displayName! : "Not logged in"),
+              ],)
+          ),
+        );
+    }
   }
-}
-
-void _LogOut() {
-  // TODO: actually log the user out
 }
