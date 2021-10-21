@@ -1,1 +1,5 @@
 **/build
+**/google-services.json
+**/.gradle
+**/.dart_tool/flutter_build
+**/pubspec.lock
