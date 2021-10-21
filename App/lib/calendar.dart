@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_material_pickers/flutter_material_pickers.dart';
-import 'package:oh/walk_view.dart';
+
+import 'walk_view.dart';
 
 class Calendar extends StatefulWidget {
   @override
