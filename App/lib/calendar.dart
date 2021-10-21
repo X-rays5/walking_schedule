@@ -29,7 +29,7 @@ class _CalendarState extends State<Calendar> {
                 child: Text('Week $_week'),
                 onPressed: (){showMaterialNumberPicker(
                   context: context,
-                  title: 'Pick Your Age',
+                  title: 'Please pick a week',
                   maxNumber: NumOfWeeks(DateTime.now().year),
                   minNumber: 1,
                   selectedNumber: _week,
@@ -37,7 +37,7 @@ class _CalendarState extends State<Calendar> {
                 );},
               ),
               DropdownButton<String>(
-                hint: Text('Please choose a location'), // Not necessary for Option 1
+                hint: Text('Please pick a day'), // Not necessary for Option 1
                 value: _selectedLocation,
                 onChanged: (String? newValue) {
                   setState(() {
@@ -61,8 +61,8 @@ class _CalendarState extends State<Calendar> {
                 // TODO: fetch walks for the day
                 for (int i = 0; i < 4; i++)
                   ListTile(
-                    title: Text('placeholder'),
-                    subtitle: Text('placeholder'),
+                    title: Text('Ochtend'),
+                    subtitle: Text('Godelief'),
                     leading: const Icon(Icons.directions_walk),
                     trailing: const Icon(Icons.arrow_forward),
                     onTap: () {
