@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 
 import 'home.dart';
 
@@ -44,7 +44,6 @@ enum AuthState {
 
 class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
-  final CollectionReference users = FirebaseFirestore.instance.collection('users');
   AuthState _authState = AuthState.kLoggedOut;
 
   _LoginPageState() {
@@ -62,28 +61,13 @@ class _LoginPageState extends State<LoginPage> {
         _authState = AuthState.kLoggedOut;
       });
     } else {
-      bool exists = await _UserExists(user.uid);
-      if (!exists) {
-        users.doc(user.uid).set({
-          "uid" : user.uid,
-          "username" : user.displayName,
-          "role" : "user"
+      var url = Uri.parse('http://192.168.1.18:3000/user/'+user.uid); //TODO: replace this with a server url
+      var res = await http.post(url);
+      if (res.statusCode == 200) {
+        setState(() {
+          _authState = AuthState.kLoggedIn;
         });
       }
-      setState(() {
-        _authState = AuthState.kLoggedIn;
-      });
-    }
-  }
-
-  Future<bool> _UserExists(String uid) async {
-    try {
-      bool exists = await users
-          .where('uid', isEqualTo: uid).get()
-          .then((value) => value.docs.isNotEmpty);
-      return exists;
-    } catch (e) {
-      rethrow;
     }
   }
 
