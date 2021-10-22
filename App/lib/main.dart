@@ -47,23 +47,23 @@ class _LoginPageState extends State<LoginPage> {
 
   _LoginPageState() {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      setState(() {
-        if (user == null) {
-          _authState = AuthState.kLoggedOut;
-        } else {
-          _authState = AuthState.kLoggedIn;
-        }
-      });
+      _AuthStateChange(user);
     });
     FirebaseAuth.instance.idTokenChanges().listen((User? user) {
-      setState(() {
-        if (user == null) {
-          _authState = AuthState.kLoggedOut;
-        } else {
-          _authState = AuthState.kLoggedIn;
-        }
-      });
+      _AuthStateChange(user);
     });
+  }
+
+  void _AuthStateChange(User? user) {
+    if (user == null) {
+      setState(() {
+        _authState = AuthState.kLoggedOut;
+      });
+    } else {
+      setState(() {
+        _authState = AuthState.kLoggedIn;
+      });
+    }
   }
 
   void _HandleSignIn() async {
@@ -83,19 +83,34 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    _authState = firebaseAuth.currentUser != null ? AuthState.kLoggedIn : AuthState.kLoggedOut;
+
     switch (_authState) {
       case AuthState.kLoggedIn:
         return HomePage(firebaseAuth);
       case AuthState.kLoggedOut:
         return Scaffold(
           appBar: AppBar(
-            title: const Text("Login"),
+            title: const Center(child: Text("Login")),
           ),
           body: Center(
-              child: Column(children: [
-                TextButton(onPressed: () {_HandleSignIn();}, child: const Text("Sign in")),
-                Text(firebaseAuth.currentUser != null ? firebaseAuth.currentUser!.displayName! : "Not logged in"),
-              ],)
+              child: InkWell(
+                onTap: () {_HandleSignIn();},
+                child: Ink(
+                  color: Color(0xFF397AF3),
+                  child: Padding(
+                    padding: EdgeInsets.all(6),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Image.asset("assets/logos/google/g-round.png", height: 30.0),
+                        SizedBox(width: 12),
+                        Text('Sign in with Google'),
+                      ],
+                    ),
+                  ),
+                ),
+              )
           ),
         );
     }
