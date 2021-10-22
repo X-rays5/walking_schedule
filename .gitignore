@@ -9,3 +9,4 @@
 **/local.properties
 **/.env
 **/node_modules
+**/*adminsdk*.json
