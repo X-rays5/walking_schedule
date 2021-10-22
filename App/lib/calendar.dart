@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_material_pickers/flutter_material_pickers.dart';
@@ -10,9 +12,23 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> {
-  List<String> _locations = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  String _selectedLocation = DateFormat.EEEE().format(DateTime.now());
-  int _week = WeekNumber(DateTime.now());
+  DateTime _date = DateTime.now();
+  final List _days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  final List _months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  Future<void> _DatePicker(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate: _date,
+          firstDate: DateTime(DateTime.now().year - 2),
+          lastDate: DateTime(DateTime.now().year + 2),
+    );
+    if (picked != null && picked != _date) {
+      setState(() {
+        _date = picked;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,37 +38,10 @@ class _CalendarState extends State<Calendar> {
       ),
       body: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              TextButton(
-                child: Text('Week $_week'),
-                onPressed: (){showMaterialNumberPicker(
-                  context: context,
-                  title: 'Please pick a week',
-                  maxNumber: NumOfWeeks(DateTime.now().year),
-                  minNumber: 1,
-                  selectedNumber: _week,
-                  onChanged: (value) => setState(() => _week = value),
-                );},
-              ),
-              DropdownButton<String>(
-                hint: Text('Please pick a day'), // Not necessary for Option 1
-                value: _selectedLocation,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedLocation = newValue!;
-                  });
-                },
-                items: _locations.map((String location) {
-                  return DropdownMenuItem<String>(
-                    child: new Text(location),
-                    value: location,
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
+         TextButton(
+             onPressed: (){_DatePicker(context);},
+             child: Text(_days[_date.weekday - 1]+DateFormat(' dd ').format(_date)+_months[_date.month - 1]+' '+DateFormat('yyyy').format(_date))
+         ),
           Expanded(
             child: ListView(
               scrollDirection: Axis.vertical,
