@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'home.dart';
@@ -43,6 +44,7 @@ enum AuthState {
 
 class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  final CollectionReference users = FirebaseFirestore.instance.collection('users');
   AuthState _authState = AuthState.kLoggedOut;
 
   _LoginPageState() {
@@ -54,15 +56,34 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _AuthStateChange(User? user) {
+  void _AuthStateChange(User? user) async {
     if (user == null) {
       setState(() {
         _authState = AuthState.kLoggedOut;
       });
     } else {
+      bool exists = await _UserExists(user.uid);
+      if (!exists) {
+        users.doc(user.uid).set({
+          "uid" : user.uid,
+          "username" : user.displayName,
+          "role" : "user"
+        });
+      }
       setState(() {
         _authState = AuthState.kLoggedIn;
       });
+    }
+  }
+
+  Future<bool> _UserExists(String uid) async {
+    try {
+      bool exists = await users
+          .where('uid', isEqualTo: uid).get()
+          .then((value) => value.docs.isNotEmpty);
+      return exists;
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -97,15 +118,15 @@ class _LoginPageState extends State<LoginPage> {
               child: InkWell(
                 onTap: () {_HandleSignIn();},
                 child: Ink(
-                  color: Color(0xFF397AF3),
+                  color: const Color(0xFF397AF3),
                   child: Padding(
-                    padding: EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(6),
                     child: Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Image.asset("assets/logos/google/g-round.png", height: 30.0),
-                        SizedBox(width: 12),
-                        Text('Sign in with Google'),
+                        Image.asset("assets/logos/google/g-round.png", height: 30.0,),
+                        const SizedBox(width: 12),
+                        const Text('Sign in with Google'),
                       ],
                     ),
                   ),
