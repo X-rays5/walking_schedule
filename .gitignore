@@ -10,3 +10,5 @@
 **/.env
 **/node_modules
 **/*adminsdk*.json
+**/dist
+**/package-lock.json
