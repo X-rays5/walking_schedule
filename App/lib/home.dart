@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:optimized_cached_image/optimized_cached_image.dart';
 
 import 'settings.dart';
 import 'users.dart';
@@ -19,16 +20,16 @@ class HomePage extends StatelessWidget {
       drawer: Drawer(
         child: ListView(
           children: <Widget>[
-            Column(
-              children: [
-                Text(_firebaseAuth.currentUser!.displayName!),
-                const Divider(
-                  height: 20,
-                  thickness: 4,
-                  indent: 0,
-                  endIndent: 0,
+            UserAccountsDrawerHeader(
+                accountName: Text(_firebaseAuth.currentUser!.displayName!),
+                accountEmail: Text(_firebaseAuth.currentUser!.email!),
+                currentAccountPicture: CircleAvatar(
+                  child: OptimizedCacheImage(
+                    imageUrl: _firebaseAuth.currentUser!.photoURL!,
+                    placeholder: (context, url) => const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                  ),
                 ),
-              ],
             ),
             ListTile(
               title: const Text("Calendar"),
