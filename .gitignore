@@ -12,3 +12,4 @@
 **/*adminsdk*.json
 **/dist
 **/package-lock.json
+**/Generated*
