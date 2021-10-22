@@ -7,3 +7,5 @@
 **/.flutter-plugins-dependencies
 **/.packages
 **/local.properties
+**/.env
+**/node_modules
