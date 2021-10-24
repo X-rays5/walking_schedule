@@ -1,50 +1,46 @@
 import {firebase} from "../firebase/firebase";
+import {Authed, DocExists, GetUser, IsUserId, User} from "../firebase/util";
 import express from "express";
+import date from 'date-and-time';
 
-interface User {
-    username: string;
-    photo: string;
+interface Walk {
+    walker: string,
+    interested: Array<string>,
+    name: string
+}
+
+function DaysInCurrentMonth() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
 }
 
 module.exports = function(app: express.Express) {
     app.get("/user/:uid", (req, res) => {
-        firebase.auth().getUser(req.params.uid).then((user) => {
-            res.json({
-                username: user.displayName,
-                photo: user.photoURL
-            });
-            console.log('found user', user.toJSON());
-        }).catch((error) => {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
-        });
-    });
+        GetUser(req.params.uid).then((user) => {
+            const date = new Date(), y = date.getFullYear(), m = date.getMonth();
+            const start_date = new Date(y, m, 1);
+            const end_date = new Date(y, m + 1, 0);
 
-    app.post("/user/:uid", (req, res) => {
-        firebase.auth().getUser(req.params.uid).then((user) => {
-            const collection = firebase.firestore().collection("users");
-            collection.doc(req.params.uid).get().then((value => {
-                if (value.exists) {
-                    res.json({
-                        success: true,
-                        message: 'user already exists',
-                    });
-                } else {
-                    const data = {
-                        uid: req.params.uid,
-                        role: 'user'
-                    };
-                    collection.doc(req.params.uid).set(data);
-                    res.json({
-                        success: true,
-                        message: 'user created',
-                    });
-                }
-            })).catch((error) => {
+            firebase.firestore().collection('walks').where('finalwalker', '==', user.name)
+                .where('date', '>=', start_date)
+                .where('date', '<=', end_date)
+                .get().then((doc) => {
+                let walks: Walk[] = [];
+                doc.docs.forEach((val) => {
+                    walks.push({
+                        walker: val.data().finalwalker,
+                        interested: val.data().interested,
+                        name: val.data().name,
+                    })
+                });
+                res.json({
+                    username: user.name,
+                    photo: user.photo,
+                    role: user.role,
+                    walks_this_month: walks.length,
+                    walks: walks
+                });
+            }).catch((error) => {
                 console.log(error);
                 res.status(400);
                 res.json({
@@ -62,34 +58,66 @@ module.exports = function(app: express.Express) {
         });
     });
 
-    // TODO: implement page tokens
-    app.get("/users", (req, res) => {
-        const listAllUsers = (nextPageToken: string) => {
-            // List batch of users, 1000 at a time.
-            firebase.auth()
-                .listUsers(1000, nextPageToken)
-                .then((listUsersResult) => {
-                    let users = new Array<User>();
-                    listUsersResult.users.forEach((userRecord) => {
+    // this endpoint is called on every login of a user so we can use this to access user data
+    // and then store it for later use
+    app.post("/user/:uid", (req, res) => {
+        firebase.auth().getUser(req.params.uid).then((user) => {
+            //TODO: make this so it only updates on changes since reading is cheaper then writing
+            const collection = firebase.firestore().collection("users");
+            const data = {
+                uid: user.uid,
+                name: user.displayName,
+                photo: user.photoURL,
+                role: 'user' // making a user admin must be manually done trough https://console.firebase.google.com/
+            };
+            collection.doc(user.uid).set(data).catch((error)=> {
+                console.log(error);
+                res.status(500);
+                res.json({
+                    success: false,
+                    error: error
+                });
+            });
+            res.json({
+                success: true,
+                message: 'user created',
+            });
+        });
+    });
+
+    app.get("/users/:page", (req, res) => {
+        Authed(req.header('X-API-Uid')).then((authed) => {
+            if (authed) {
+                const collection = firebase.firestore().collection('users');
+                collection.limit(100).get().then((doc) => {
+                    let users: User[] = [];
+                    doc.docs.forEach((val) => {
                         users.push({
-                            username: userRecord.displayName,
-                            photo: userRecord.photoURL,
+                            name: val.data().name,
+                            photo: val.data().photo,
+                            role: val.data().role
                         });
                     });
                     res.json(users);
-                })
-                .catch((error) => {
+                }).catch((error) => {
                     console.log(error);
-                    res.status(400);
+                    res.status(500);
                     res.json({
                         success: false,
                         error: error
                     });
                 });
-        };
-
-        // @ts-ignore
-        // if no pageToken is specified, the operation will list users from the beginning, ordered by uid.
-        listAllUsers();
+            } else {
+                res.status(403);
+                res.send('');
+            }
+        }).catch((error) => {
+            console.log(error);
+            res.status(500);
+            res.json({
+                success: false,
+                error: error
+            });
+        });
     });
 }
