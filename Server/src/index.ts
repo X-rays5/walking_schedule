@@ -5,7 +5,8 @@ import express from 'express';
 const app = express();
 
 // import all routes
-require('./routes/user.ts')(app);
+require('./routes/user')(app);
+require('./routes/walks')(app);
 
 // start the Express server
 app.listen(process.env.PORT, () => {

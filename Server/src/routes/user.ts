@@ -1,7 +1,8 @@
 import {firebase} from "../firebase/firebase";
 import {Authed, DocExists, GetUser, IsUserId, User} from "../firebase/util";
 import express from "express";
-import date from 'date-and-time';
+import {firestore} from "firebase-admin";
+import Timestamp = firestore.Timestamp;
 
 interface Walk {
     walker: string,
@@ -17,9 +18,9 @@ function DaysInCurrentMonth() {
 module.exports = function(app: express.Express) {
     app.get("/user/:uid", (req, res) => {
         GetUser(req.params.uid).then((user) => {
-            const date = new Date(), y = date.getFullYear(), m = date.getMonth();
-            const start_date = new Date(y, m, 1);
-            const end_date = new Date(y, m + 1, 0);
+            const cur_date = new Date(), y = cur_date.getFullYear(), m = cur_date.getMonth();
+            const start_date = Timestamp.fromDate(new Date(y, m, 1));
+            const end_date = Timestamp.fromDate(new Date(y, m + 1, 0));
 
             firebase.firestore().collection('walks').where('finalwalker', '==', user.name)
                 .where('date', '>=', start_date)
