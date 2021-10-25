@@ -1,25 +1,32 @@
+import 'dart:convert';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:optimized_cached_image/optimized_cached_image.dart';
 import 'package:quiver/time.dart';
+import 'package:http/http.dart' as http;
 
 class UserView extends StatefulWidget {
-  const UserView(String username, String photo, {Key? key}) : _username = username, _photo = photo, super(key: key);
+  const UserView(String username, String photo, String role, {Key? key}) : _username = username, _photo = photo, _role = role, super(key: key);
 
   final String _username;
   final String _photo;
+  final String _role;
 
   @override
-  _UserViewState createState() => _UserViewState(_username, _photo);
+  _UserViewState createState() => _UserViewState(_username, _photo, _role);
 }
 
 class _UserViewState extends State<UserView> {
-  _UserViewState(String username, String photo) : _username = username, _photo = photo;
+  _UserViewState(String username, String photo, String role) : _username = username, _photo = photo, _role = role;
 
   final String _username;
   final String _photo;
+  final String _role;
   late DateTime _start_date;
   late DateTime _end_date;
+  late Future<List> _walks;
 
   @override
   initState() {
@@ -27,6 +34,25 @@ class _UserViewState extends State<UserView> {
     DateTime date = DateTime.now();
     _start_date = DateTime(date.year, date.month, 1);
     _end_date = DateTime(date.year, date.month, daysInMonth(date.year, date.month));
+    _walks = _GetWalks();
+  }
+
+  Future<List> _GetWalks() async {
+    var url = Uri.parse('http://192.168.1.18:3000/walks/${_username}/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}'); //TODO: replace this with a server url
+    var res = await http.get(url, headers: {
+      'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+    });
+    if (res.statusCode == 200) {
+      return json.decode(res.body);
+    } else {
+      return await _GetWalks();
+    }
+  }
+
+  void _Reload() {
+    setState(() {
+      _walks = _GetWalks();
+    });
   }
 
   Future<void> _DatePickerStart(BuildContext context) async {
@@ -40,6 +66,7 @@ class _UserViewState extends State<UserView> {
       setState(() {
         _start_date = picked;
       });
+      _Reload();
     }
   }
 
@@ -54,6 +81,7 @@ class _UserViewState extends State<UserView> {
       setState(() {
         _end_date = picked;
       });
+      _Reload();
     }
   }
 
@@ -62,12 +90,18 @@ class _UserViewState extends State<UserView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("User Info"),
+        actions: [
+          IconButton(
+              onPressed: (){_Reload();},
+              icon: const Icon(Icons.refresh)
+          )
+        ],
       ),
       body: Column(
         children: [
           UserAccountsDrawerHeader(
             accountName: Text(_username),
-            accountEmail: const Text(''),
+            accountEmail: Text(_role),
             currentAccountPicture: CircleAvatar(
               child: OptimizedCacheImage(
               imageUrl: _photo,
@@ -106,18 +140,37 @@ class _UserViewState extends State<UserView> {
               ],
             ),
           ),
-          int.parse(DateFormat('yyyyD').format(_start_date)) > int.parse(DateFormat('yyyyD').format(_end_date)) ? const Text("invalid period") : Expanded(
-              child: ListView(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                children: [
-                  for (int i = 0; i < 50; i++)
-                    ListTile(
-                        title: Text('placeholder $i'),
-                        leading: const Icon(Icons.directions_walk)
-                    )
-                ],
-              )
+          FutureBuilder<List>(
+            future: _walks,
+            builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                return Container(
+                  child: Expanded(
+                    child: ListView(
+                      scrollDirection: Axis.vertical,
+                      shrinkWrap: true,
+                      children: [
+                        for (int i = 0; i < snapshot.data!.length; i++)
+                          ListTile(
+                            title: Text(snapshot.data![i]['name']),
+                            subtitle: Text(snapshot.data![i]['date']),
+                            leading: const Icon(Icons.directions_walk),
+                            trailing: const Icon(Icons.arrow_forward),
+                            //onTap: () {
+                            //  Navigator.of(context).push(MaterialPageRoute(
+                            //    builder: (BuildContext context) => UserView(snapshot.data![i]['name'], snapshot.data![i]['photo'])));
+                            //},
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+            }
           ),
         ],
       ),
