@@ -1,8 +1,8 @@
-import 'dart:ffi';
-
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_material_pickers/flutter_material_pickers.dart';
+import 'package:http/http.dart' as http;
 
 import 'walk_view.dart';
 
@@ -16,6 +16,39 @@ class _CalendarState extends State<Calendar> {
   final List _days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   final List _months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+  late Future<List> _walks;
+  bool _walks_today = false;
+
+  @override
+  initState() {
+    super.initState();
+    _walks = _GetWalks();
+  }
+
+  Future<List> _GetWalks() async {
+    var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(_date)}'); //TODO: replace this with a server url
+    var res = await http.get(url, headers: {
+      'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+    });
+    if (res.statusCode == 200) {
+      if (res.body == '[]') {
+        _walks_today = false;
+        return json.decode('[{"walker":"none","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"20-10-2021","id":"yvNERw07CfcKKxbKWvOu"}]'); // since it needs to have something
+      } else {
+        _walks_today = true;
+        return json.decode(res.body);
+      }
+    } else {
+      return await _GetWalks();
+    }
+  }
+
+  void _Reload() {
+    setState(() {
+      _walks = _GetWalks();
+    });
+  }
+
   Future<void> _DatePicker(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
           context: context,
@@ -27,6 +60,7 @@ class _CalendarState extends State<Calendar> {
       setState(() {
         _date = picked;
       });
+      _Reload();
     }
   }
 
@@ -35,33 +69,59 @@ class _CalendarState extends State<Calendar> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Calendar"),
+        actions: [
+          IconButton(
+              onPressed: (){_Reload();},
+              icon: const Icon(Icons.refresh)
+          )
+        ],
       ),
       body: Column(
         children: [
-         TextButton(
-             onPressed: (){_DatePicker(context);},
-             child: Text(_days[_date.weekday - 1]+DateFormat(' dd ').format(_date)+_months[_date.month - 1]+' '+DateFormat('yyyy').format(_date))
-         ),
-          Expanded(
-            child: ListView(
-              scrollDirection: Axis.vertical,
-              shrinkWrap: true,
-              children: [
-                // TODO: fetch walks for the day
-                for (int i = 0; i < 4; i++)
-                  ListTile(
-                    title: Text('Ochtend'),
-                    subtitle: Text('Godelief'),
-                    leading: const Icon(Icons.directions_walk),
-                    trailing: const Icon(Icons.arrow_forward),
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (BuildContext context) => WalkView("id"))); // TODO: insert walk id
-                    },
-                  ),
-              ],
-            )
+          Center(
+            child: TextButton(
+                onPressed: (){_DatePicker(context);},
+                child: Text(_days[_date.weekday - 1]+DateFormat(' dd ').format(_date)+_months[_date.month - 1]+' '+DateFormat('yyyy').format(_date))
+            ),
           ),
+          FutureBuilder<List>(
+              future: _walks,
+              builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  if (!_walks_today) {
+                    return const Center(
+                      child: Text('Nothing available for this date'),
+                    );
+                  }
+                  return Container(
+                    child:
+                      Expanded(
+                        child: ListView(
+                            scrollDirection: Axis.vertical,
+                            shrinkWrap: true,
+                            children: [
+                              for (int i = 0; i < snapshot.data!.length; i++)
+                                ListTile(
+                                  title: Text(snapshot.data![i]['name']),
+                                  subtitle: Text('Interested: ${snapshot.data![i]['interested'].length}'),
+                                  leading: const Icon(Icons.directions_walk),
+                                  trailing: const Icon(Icons.arrow_forward),
+                                  onTap: () {
+                                    Navigator.of(context).push(MaterialPageRoute(
+                                        builder: (BuildContext context) => WalkView(snapshot.data![i])));
+                                  },
+                                ),
+                            ]
+                        ),
+                      ),
+                  );
+                } else {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+              }
+          )
         ],
       )
     );
