@@ -1,6 +1,6 @@
 import {firebase} from "../firebase/firebase";
 import express from "express";
-import {Authed} from "../firebase/util";
+import {Authed, DocExists} from "../firebase/util";
 import {firestore} from "firebase-admin";
 import date from 'date-and-time';
 import { Response } from "express-serve-static-core";
@@ -8,11 +8,18 @@ import { Response } from "express-serve-static-core";
 interface Walk {
     walker: string,
     interested: Array<string>,
-    name: string
+    name: string,
+    date: string,
+    id: string
 }
 
-function GetDateFromStr(yyyyMD: string): number {
-    return parseInt(date.format(new Date(yyyyMD), 'YYYYMD'))
+function GetDateFromStr(YYYYMD: string): number {
+    return parseInt(date.format(new Date(YYYYMD), 'DMYYYY'))
+}
+
+function CheckValidDate(YYYYMD: string): boolean {
+    const check = GetDateFromStr(YYYYMD);
+    return check != undefined && check > 0;
 }
 
 function GetWalksFromTo(res: Response<any, Record<string, any>, number>, from: string, to: string) {
@@ -28,6 +35,8 @@ function GetWalksFromTo(res: Response<any, Record<string, any>, number>, from: s
                 walker: val.data().finalwalker,
                 interested: val.data().interested,
                 name: val.data().name,
+                date: val.data().formatteddate,
+                id: val.id
             })
         });
         res.json(walks);
@@ -43,8 +52,6 @@ function GetWalksFromTo(res: Response<any, Record<string, any>, number>, from: s
 
 function GetWalksOnDayUser(res: Response<any, Record<string, any>, number>, name: string, day: string) {
     const start = GetDateFromStr(day);
-    console.log(name);
-    console.log(start);
     firebase.firestore().collection('walks')
         .where('finalwalker', '==', name)
         .where('date', '>=', start)
@@ -56,9 +63,57 @@ function GetWalksOnDayUser(res: Response<any, Record<string, any>, number>, name
                 walker: val.data().finalwalker,
                 interested: val.data().interested,
                 name: val.data().name,
+                date: val.data().formatteddate,
+                id: val.id
             })
         });
         res.json(walks);
+    }).catch((error) => {
+        console.log(error);
+        res.status(400);
+        res.json({
+            success: false,
+            error: error
+        });
+    });
+}
+
+function GetWalkFromId(res: Response<any, Record<string, any>, number>, doc_id: string) {
+    firebase.firestore().collection('walks').doc(doc_id).get().then((doc) => {
+        const walk: Walk = {
+            walker: doc.data().finalwalker,
+            interested: doc.data().interested,
+            name: doc.data().name,
+            date: doc.data().formatteddate,
+            id: doc.id
+        }
+        res.json(walk);
+    }).catch((error) => {
+        console.log(error);
+        res.status(400);
+        res.json({
+            success: false,
+            error: error
+        });
+    });
+}
+
+function GetWalkFromDate(res: Response<any, Record<string, any>, number>, date: string) {
+    const start = GetDateFromStr(date);
+    firebase.firestore().collection('walks')
+        .where('date', '==', start)
+        .get().then((doc) => {
+            let walks: Walk[] = [];
+            doc.docs.forEach((val) => {
+                walks.push({
+                    walker: val.data().finalwalker,
+                    interested: val.data().interested,
+                    name: val.data().name,
+                    date: val.data().formatteddate,
+                    id: val.id
+                })
+            });
+            res.json(walks);
     }).catch((error) => {
         console.log(error);
         res.status(400);
@@ -73,42 +128,39 @@ function GetWalksOnDayUser(res: Response<any, Record<string, any>, number>, name
 module.exports = function(app: express.Express) {
     // for testing purposes
     app.get("/addtestwalk/:date", (req, res) => {
-        const data = {
-            date: GetDateFromStr(req.params.date),
-            finalwalker: 'none',
-            interested: ['Hans', 'Piet', 'Papzakje'],
-            name: 'test walk'
+        if (CheckValidDate(req.params.date)) {
+            const data = {
+                date: GetDateFromStr(req.params.date),
+                finalwalker: 'none',
+                interested: ['Hans', 'Piet', 'Papzakje'],
+                name: 'test walk',
+                formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY'),
+            }
+            firebase.firestore().collection('walks').add(data);
+            res.send('');
+        } else {
+            res.status(400);
+            res.json({
+                success: false,
+                error: {
+                    code: 'invalid/date',
+                }
+            })
         }
-        firebase.firestore().collection('walks').add(data);
-        res.send('');
     });
 
     // date are expected as yyyy-MM-DD
-    app.get('/walks/:date', (req, res) => {
+    app.get('/walks/:possibleid', (req, res) => {
         try {
             Authed(req.header('X-API-Uid')).then((authed) => {
                 if (authed) {
-                    const start = GetDateFromStr(req.params.date);
-                    firebase.firestore().collection('walks')
-                        .where('date', '==', start)
-                        .get().then((doc) => {
-                        let walks: Walk[] = [];
-                        doc.docs.forEach((val) => {
-                            walks.push({
-                                walker: val.data().finalwalker,
-                                interested: val.data().interested,
-                                name: val.data().name,
-                            })
-                        });
-                        res.json(walks);
-                    }).catch((error) => {
-                        console.log(error);
-                        res.status(400);
-                        res.json({
-                            success: false,
-                            error: error
-                        });
-                    });
+                    DocExists('walks', req.params.possibleid).then((exists) => {
+                        if (exists) {
+                            GetWalkFromId(res, req.params.possibleid);
+                        } else {
+                            GetWalkFromDate(res, req.params.possibleid);
+                        }
+                    })
                 } else {
                     res.status(403);
                     res.send();
@@ -182,6 +234,8 @@ module.exports = function(app: express.Express) {
                                 walker: val.data().finalwalker,
                                 interested: val.data().interested,
                                 name: val.data().name,
+                                date: val.data().formatteddate,
+                                id: val.id
                             })
                         });
                         res.json(walks);
