@@ -15,8 +15,8 @@ module.exports = function(app: express.Express) {
         GetUser(req.params.name).then((user) => {
             // get start and end date of current month
             const cur_date = new Date(), y = cur_date.getFullYear(), m = cur_date.getMonth();
-            const start_date = parseInt(date.format(new Date(y, m, 1), 'YYYYMD'));
-            const end_date = parseInt(date.format(new Date(y, m + 1, 0), 'YYYYMD'));
+            const start_date = parseInt(date.format(new Date(y, m, 1), 'DMYYYY'));
+            const end_date = parseInt(date.format(new Date(y, m + 1, 0), 'DMYYYY'));
 
             firebase.firestore().collection('walks')
                 .where('finalwalker', '==', user.name)
@@ -59,26 +59,34 @@ module.exports = function(app: express.Express) {
     // and then store it for later use
     app.post("/user/:uid", (req, res) => {
         firebase.auth().getUser(req.params.uid).then((user) => {
-            //TODO: make this so it only updates on changes since reading is cheaper then writing
-            const collection = firebase.firestore().collection("users");
-            const data = {
-                uid: user.uid,
-                name: user.displayName,
-                photo: user.photoURL,
-                role: 'user' // making a user admin must be manually done trough https://console.firebase.google.com/
-            };
-            collection.doc(user.uid).set(data).catch((error)=> {
-                console.log(error);
-                res.status(500);
+            //TODO: make it so this can update
+            if (!DocExists('users', user.uid)) {
+                const data = {
+                    uid: user.uid,
+                    name: user.displayName,
+                    photo: user.photoURL,
+                    role: 'user' // making a user admin must be manually done trough https://console.firebase.google.com/
+                };
+                firebase.firestore().collection('users').doc(user.uid).set(data).catch((error)=> {
+                    console.log(error);
+                    res.status(500);
+                    res.json({
+                        success: false,
+                        error: error
+                    });
+                });
+                res.json({
+                    success: true,
+                    message: 'user created',
+                });
+            } else {
                 res.json({
                     success: false,
-                    error: error
-                });
-            });
-            res.json({
-                success: true,
-                message: 'user created',
-            });
+                    error: {
+                        code: 'user/exists'
+                    }
+                })
+            }
         });
     });
 
@@ -95,6 +103,7 @@ module.exports = function(app: express.Express) {
                             role: val.data().role
                         });
                     });
+                    users.pop(); // if we don't pop it sends a random empty member for some reason
                     res.json(users);
                 }).catch((error) => {
                     console.log(error);
