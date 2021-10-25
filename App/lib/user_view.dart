@@ -1,11 +1,12 @@
 import 'dart:convert';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:optimized_cached_image/optimized_cached_image.dart';
 import 'package:quiver/time.dart';
 import 'package:http/http.dart' as http;
+
+import 'walk_view.dart';
 
 class UserView extends StatefulWidget {
   const UserView(String username, String photo, String role, {Key? key}) : _username = username, _photo = photo, _role = role, super(key: key);
@@ -156,10 +157,10 @@ class _UserViewState extends State<UserView> {
                             subtitle: Text(snapshot.data![i]['date']),
                             leading: const Icon(Icons.directions_walk),
                             trailing: const Icon(Icons.arrow_forward),
-                            //onTap: () {
-                            //  Navigator.of(context).push(MaterialPageRoute(
-                            //    builder: (BuildContext context) => UserView(snapshot.data![i]['name'], snapshot.data![i]['photo'])));
-                            //},
+                            onTap: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (BuildContext context) => WalkView(snapshot.data![i])));
+                            },
                           ),
                       ],
                     ),
