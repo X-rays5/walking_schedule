@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
 
     switch (_authState) {
       case AuthState.kLoggedIn:
-        return HomePage(firebaseAuth);
+        return HomePage();
       case AuthState.kLoggedOut:
         return Scaffold(
           appBar: AppBar(
