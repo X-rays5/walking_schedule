@@ -59,34 +59,41 @@ module.exports = function(app: express.Express) {
     // and then store it for later use
     app.post("/user/:uid", (req, res) => {
         firebase.auth().getUser(req.params.uid).then((user) => {
-            //TODO: make it so this can update
-            if (!DocExists('users', user.uid)) {
-                const data = {
-                    uid: user.uid,
-                    name: user.displayName,
-                    photo: user.photoURL,
-                    role: 'user' // making a user admin must be manually done trough https://console.firebase.google.com/
-                };
-                firebase.firestore().collection('users').doc(user.uid).set(data).catch((error)=> {
-                    console.log(error);
-                    res.status(500);
+            const collection = firebase.firestore().collection("users");
+            collection.doc(req.params.uid).get().then((value => {
+                if (value.exists) {
                     res.json({
-                        success: false,
-                        error: error
+                        success: true,
+                        message: 'user already exists',
                     });
-                });
-                res.json({
-                    success: true,
-                    message: 'user created',
-                });
-            } else {
+                } else {
+                    const data = {
+                        name: user.displayName,
+                        photo: user.photoURL,
+                        uid: user.uid,
+                        role: 'user'
+                    };
+                    collection.doc(req.params.uid).set(data)
+                    res.json({
+                        success: true,
+                        message: 'user created',
+                    });
+                }
+            })).catch((error) => {
+                console.log(error);
+                res.status(400);
                 res.json({
                     success: false,
-                    error: {
-                        code: 'user/exists'
-                    }
-                })
-            }
+                    error: error
+                });
+            });
+        }).catch((error) => {
+            console.log(error);
+            res.status(400);
+            res.json({
+                success: false,
+                error: error
+            });
         });
     });
 
