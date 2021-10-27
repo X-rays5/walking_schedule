@@ -51,7 +51,6 @@ class _UserViewState extends State<UserView> {
         // needs to have actual data even if there is nothing
         return json.decode('[{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"2-10-2021","id":"Ih0yeumVFsqalPkSZH1A"},{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"10-10-2021","id":"OCKZLq4SWvw65DiMiENx"}]');
       } else {
-        print('non empty');
         _has_walks = true;
         return json.decode(res.body);
       }

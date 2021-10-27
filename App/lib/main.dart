@@ -1,15 +1,44 @@
-import 'dart:convert';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:overlay_support/overlay_support.dart';
 import 'package:http/http.dart' as http;
 
 import 'home.dart';
 
+int createUniqueId() {
+  return DateTime.now().millisecondsSinceEpoch.remainder(100000);
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await AwesomeNotifications().createNotification(
+    content: NotificationContent(
+      id: createUniqueId(),
+      channelKey: 'basic_channel',
+      title: message.data['title'],
+      body: message.data['body'],
+      notificationLayout: NotificationLayout.Default,
+    ),
+  );
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  AwesomeNotifications().initialize('resource://drawable/logo',
+    [
+      NotificationChannel(
+        channelKey: 'basic_channel',
+        channelName: 'Basic Notifications',
+        defaultColor: Colors.black,
+        importance: NotificationImportance.High,
+        channelShowBadge: true,
+      ),
+    ],);
   runApp(const App());
 }
 
@@ -18,18 +47,19 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Dog walking calendar',
-      theme: ThemeData(
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-      ),
-      themeMode: ThemeMode.system,
-      debugShowCheckedModeBanner: false,
-      home: LoginPage(),
-    );
+    return OverlaySupport(
+        child: MaterialApp(
+          title: 'walking schedule',
+          theme: ThemeData(
+            brightness: Brightness.light,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+          ),
+          themeMode: ThemeMode.system,
+          debugShowCheckedModeBanner: false,
+          home: LoginPage(),
+        ));
   }
 }
 
@@ -47,10 +77,68 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   AuthState _authState = AuthState.kLoggedOut;
 
+  late final FirebaseMessaging _messaging;
+
   _LoginPageState() {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       _AuthStateChange(user);
     });
+  }
+
+  @override
+  void initState() {
+    registerNotification();
+    checkForInitialMessage();
+    super.initState();
+  }
+
+  void registerNotification() async {
+    _messaging = FirebaseMessaging.instance;
+    _messaging.subscribeToTopic('all');
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    NotificationSettings settings = await _messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      // For handling the received notifications
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        await AwesomeNotifications().createNotification(
+          content: NotificationContent(
+            id: createUniqueId(),
+            channelKey: 'basic_channel',
+            title: message.data['title'],
+            body: message.data['body'],
+            notificationLayout: NotificationLayout.Default,
+          ),
+        );
+      });
+    }
+  }
+
+  checkForInitialMessage() async {
+    await Firebase.initializeApp();
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: createUniqueId(),
+          channelKey: 'basic_channel',
+          title: initialMessage.data['title'],
+          body: initialMessage.data['body'],
+          notificationLayout: NotificationLayout.Default,
+        ),
+      );
+    }
   }
 
   void _AuthStateChange(User? user) async {
