@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:quiver/time.dart';
 
 import 'walk_view.dart';
-import 'settings.dart';
 import 'users.dart';
 import 'calendar.dart';
 
@@ -94,15 +93,6 @@ class _HomePageState extends State<HomePage> {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (BuildContext context) => Users()));
-              },
-            ),
-            ListTile(
-              title: const Text("Settings"),
-              leading: const Icon(Icons.settings),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => Settings()));
               },
             ),
             ListTile(
