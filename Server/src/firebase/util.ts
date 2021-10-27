@@ -32,6 +32,21 @@ export async function Authed(uid: string): Promise<boolean> {
     }
 }
 
+export async function IsAdmin(id: string): Promise<boolean> {
+    return await firebase.firestore().collection('users')
+        .where('uid', '==', id).limit(1).get().then((doc) => {
+        return doc.docs.length > 0 && doc.docs[0].data().role == 'admin'
+    })
+}
+
+export async function AuthedAdmin(uid: string): Promise<boolean> {
+    if (uid !== undefined && uid.length > 0) {
+        return await IsAdmin(uid);
+    } else {
+        return false;
+    }
+}
+
 export interface User {
     name: string,
     photo: string,
@@ -56,4 +71,19 @@ export async function GetUser(name: string): Promise<User> {
            };
        }
     });
+}
+
+export async function SendNotification(title: String, body: String) {
+    const message = {
+        data: {
+            click_action: 'FLUTTER_NOTIFICATION_CLICK',
+            title: 'a title',
+            body: 'woah'
+        },
+        topic: 'all'
+    };
+    return await firebase.messaging().send(message)
+        .then((response) => {
+            return response;
+        })
 }

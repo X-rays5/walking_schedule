@@ -1,7 +1,7 @@
 import {firebase} from "../firebase/firebase";
 import express from "express";
-import {Authed, DocExists} from "../firebase/util";
-import {firestore} from "firebase-admin";
+import {Authed, AuthedAdmin, DocExists} from "../firebase/util";
+import {auth, firestore} from "firebase-admin";
 import date from 'date-and-time';
 import { Response } from "express-serve-static-core";
 
@@ -182,6 +182,70 @@ module.exports = function(app: express.Express) {
             });
         }
     });
+
+    app.post('/walks/:date', (req, res) => {
+        try {
+            AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
+                if (authed) {
+                    firebase.firestore().collection('users').doc()
+                    if (CheckValidDate(req.params.date)) {
+                        console.log(req.body);
+                        if (req.body.name !== undefined) {
+                            const data = {
+                                date: GetDateFromStr(req.params.date),
+                                finalwalker: 'none',
+                                formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY'),
+                                interested: [''],
+                                name: req.body.name
+                            }
+                            firebase.firestore().collection('walks').add(data).then((doc) => {
+                                res.json({
+                                    walker: data.finalwalker,
+                                    interested: data.interested,
+                                    name: data.name,
+                                    date: data.formatteddate,
+                                    id: doc.id
+                                });
+                            }).catch((error) => {
+                                console.log(error);
+                                res.status(400);
+                                res.json({
+                                    success: false,
+                                    error: error
+                                });
+                            })
+                        } else {
+                            res.status(400);
+                            res.json({
+                                success: false,
+                                error: {
+                                    code: 'missing/name'
+                                }
+                            })
+                        }
+                    } else {
+                        res.status(400);
+                        res.json({
+                            success: false,
+                            error: {
+                                code: 'invalid/date'
+                            }
+                        })
+                    }
+                } else {
+                    res.status(403);
+                    res.send();
+                }
+            });
+        } catch (error) {
+            console.log(error);
+            res.status(400);
+            res.json({
+                success: false,
+                error: error
+            });
+        }
+    })
 
     app.get('/walks/:possiblefrom/:to', (req, res) => {
         try {

@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from 'express';
 const app = express();
+app.use(express.json())
 
 // import all routes
 require('./routes/user')(app);

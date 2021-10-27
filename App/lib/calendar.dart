@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
+import 'add_walk.dart';
 import 'walk_view.dart';
 
 class Calendar extends StatefulWidget {
@@ -17,6 +18,7 @@ class _CalendarState extends State<Calendar> {
   final List _months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   late Future<List> _walks;
+  late bool _is_admin = false;
   bool _walks_today = false;
 
   @override
@@ -31,6 +33,14 @@ class _CalendarState extends State<Calendar> {
       'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
     });
     if (res.statusCode == 200) {
+      url = Uri.parse('http://192.168.1.18:3000/user/${FirebaseAuth.instance.currentUser!.displayName!}');
+      var admin = await http.get(url, headers: {
+        'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+      });
+      print(json.decode(admin.body)['role'] == 'admin');
+      setState(() {
+        _is_admin = json.decode(admin.body)['role'] == 'admin';
+      });
       if (res.body == '[]') {
         _walks_today = false;
         // needs to have actual data even if there is nothing
@@ -65,6 +75,27 @@ class _CalendarState extends State<Calendar> {
     }
   }
 
+  Widget _AddWalkButton(BuildContext context) {
+    if (_is_admin) {
+      return FloatingActionButton(
+        backgroundColor: Theme.of(context).backgroundColor,
+        foregroundColor: Theme.of(context).primaryColor,
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => AddWalk()));
+        },
+        child: const Icon(Icons.add),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  Widget _InterestedCount(Map<String, dynamic> json) {
+    int count = json['interested'][0] == '' ? 0 : json['interested'].length;
+    return Text('Interested: $count');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,6 +108,7 @@ class _CalendarState extends State<Calendar> {
           )
         ],
       ),
+      floatingActionButton: _AddWalkButton(context),
       body: Column(
         children: [
           Center(
@@ -104,7 +136,7 @@ class _CalendarState extends State<Calendar> {
                               for (int i = 0; i < snapshot.data!.length; i++)
                                 ListTile(
                                   title: Text(snapshot.data![i]['name']),
-                                  subtitle: Text('Interested: ${snapshot.data![i]['interested'].length}'),
+                                  subtitle: _InterestedCount(snapshot.data![i]),
                                   leading: const Icon(Icons.directions_walk),
                                   trailing: const Icon(Icons.arrow_forward),
                                   onTap: () {
