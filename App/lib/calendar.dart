@@ -33,7 +33,8 @@ class _CalendarState extends State<Calendar> {
     if (res.statusCode == 200) {
       if (res.body == '[]') {
         _walks_today = false;
-        return json.decode('[{"walker":"none","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"20-10-2021","id":"yvNERw07CfcKKxbKWvOu"}]'); // since it needs to have something
+        // needs to have actual data even if there is nothing
+        return json.decode('[{"walker":"none","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"20-10-2021","id":"yvNERw07CfcKKxbKWvOu"}]');
       } else {
         _walks_today = true;
         return json.decode(res.body);

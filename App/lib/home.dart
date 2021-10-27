@@ -63,15 +63,15 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           children: <Widget>[
             UserAccountsDrawerHeader(
-                accountName: Text(_firebaseAuth.currentUser!.displayName!),
-                accountEmail: Text(_firebaseAuth.currentUser!.email!),
-                currentAccountPicture: CircleAvatar(
-                  child: OptimizedCacheImage(
-                    imageUrl: _firebaseAuth.currentUser!.photoURL!,
-                    placeholder: (context, url) => const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
-                  ),
+              accountName: Text(_firebaseAuth.currentUser!.displayName!),
+              accountEmail: Text(_firebaseAuth.currentUser!.email!),
+              currentAccountPicture: CircleAvatar(
+                child: OptimizedCacheImage(
+                  imageUrl: _firebaseAuth.currentUser!.photoURL!,
+                  placeholder: (context, url) => const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
+              ),
             ),
             ListTile(
               title: const Text("Calendar"),

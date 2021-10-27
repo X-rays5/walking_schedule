@@ -27,7 +27,9 @@ class _UserViewState extends State<UserView> {
   final String _role;
   late DateTime _start_date;
   late DateTime _end_date;
+
   late Future<List> _walks;
+  bool _has_walks = false;
 
   @override
   initState() {
@@ -44,7 +46,15 @@ class _UserViewState extends State<UserView> {
       'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
     });
     if (res.statusCode == 200) {
-      return json.decode(res.body);
+      if (res.body == '[]') {
+        _has_walks = false;
+        // needs to have actual data even if there is nothing
+        return json.decode('[{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"2-10-2021","id":"Ih0yeumVFsqalPkSZH1A"},{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"10-10-2021","id":"OCKZLq4SWvw65DiMiENx"}]');
+      } else {
+        print('non empty');
+        _has_walks = true;
+        return json.decode(res.body);
+      }
     } else {
       return await _GetWalks();
     }
@@ -145,27 +155,33 @@ class _UserViewState extends State<UserView> {
             future: _walks,
             builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                return Container(
-                  child: Expanded(
-                    child: ListView(
-                      scrollDirection: Axis.vertical,
-                      shrinkWrap: true,
-                      children: [
-                        for (int i = 0; i < snapshot.data!.length; i++)
-                          ListTile(
-                            title: Text(snapshot.data![i]['name']),
-                            subtitle: Text(snapshot.data![i]['date']),
-                            leading: const Icon(Icons.directions_walk),
-                            trailing: const Icon(Icons.arrow_forward),
-                            onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (BuildContext context) => WalkView(snapshot.data![i])));
-                            },
-                          ),
-                      ],
+                if (!_has_walks) {
+                  return const Center(
+                    child: Text('Nothing available for this date'),
+                  );
+                }
+                  return Container(
+                    child: Expanded(
+                      child: ListView(
+                        scrollDirection: Axis.vertical,
+                        shrinkWrap: true,
+                        children: [
+                          for (int i = 0; i < snapshot.data!.length; i++)
+                            ListTile(
+                              title: Text(snapshot.data![i]['name']),
+                              subtitle: Text(snapshot.data![i]['date']),
+                              leading: const Icon(Icons.directions_walk),
+                              trailing: const Icon(Icons.arrow_forward),
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (BuildContext context) =>
+                                        WalkView(snapshot.data![i])));
+                              },
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
+                  );
               } else {
                 return const Center(
                   child: CircularProgressIndicator(),

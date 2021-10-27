@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -50,9 +51,6 @@ class _LoginPageState extends State<LoginPage> {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       _AuthStateChange(user);
     });
-    FirebaseAuth.instance.idTokenChanges().listen((User? user) {
-      _AuthStateChange(user);
-    });
   }
 
   void _AuthStateChange(User? user) async {
@@ -61,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
         _authState = AuthState.kLoggedOut;
       });
     } else {
-      var url = Uri.parse('http://192.168.1.18:3000/user/'+user.uid); //TODO: replace this with a server url
+      var url = Uri.parse('http://192.168.1.18:3000/user/${user.uid}'); //TODO: replace this with a server url
       var res = await http.post(url);
       if (res.statusCode == 200) {
         setState(() {
@@ -92,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
 
     switch (_authState) {
       case AuthState.kLoggedIn:
-        return HomePage();
+        return const HomePage();
       case AuthState.kLoggedOut:
         return Scaffold(
           appBar: AppBar(
