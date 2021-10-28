@@ -43,27 +43,27 @@ class _UserViewState extends State<UserView> {
 
   Future<List> _GetWalks() async {
     try {
-    var url = Uri.parse('http://192.168.1.18:3000/walks/$_username/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}'); //TODO: replace this with a server url
-    var res = await http.get(url, headers: {
-      'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
-    });
-    if (res.statusCode == 200) {
-      if (res.body == '[]') {
-        _has_walks = false;
-        // needs to have actual data even if there is nothing
-        return json.decode('[{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"2-10-2021","id":"Ih0yeumVFsqalPkSZH1A"},{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"10-10-2021","id":"OCKZLq4SWvw65DiMiENx"}]');
+      var url = Uri.parse('http://192.168.1.18:3000/walks/$_username/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}'); //TODO: replace this with a server url
+      var res = await http.get(url, headers: {
+        'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+      });
+      if (res.statusCode == 200) {
+        if (res.body == '[]') {
+          _has_walks = false;
+          // needs to have actual data even if there is nothing
+          return json.decode('[{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"2-10-2021","id":"Ih0yeumVFsqalPkSZH1A"},{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"10-10-2021","id":"OCKZLq4SWvw65DiMiENx"}]');
+        } else {
+          _has_walks = true;
+          return json.decode(res.body);
+        }
       } else {
-        _has_walks = true;
-        return json.decode(res.body);
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
+        );
+        _has_walks = false;
+        return json.decode('[{"placeholder": true}]');
       }
-    } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
-      );
-      _has_walks = false;
-      return json.decode('[{"placeholder": true}]');
-    }
     } catch (err) {
       showDialog(
         context: context,
