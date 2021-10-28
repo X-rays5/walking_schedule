@@ -62,7 +62,7 @@ class _UserViewState extends State<UserView> {
         builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
       );
       _has_walks = false;
-      return json.decode('["placeholder": true]');
+      return json.decode('[{"placeholder": true}]');
     }
     } catch (err) {
       showDialog(
@@ -70,7 +70,7 @@ class _UserViewState extends State<UserView> {
         builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
       );
       _has_walks = false;
-      return json.decode('["placeholder": true]');
+      return json.decode('[{"placeholder": true}]');
     }
   }
 

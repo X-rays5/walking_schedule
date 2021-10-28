@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
         builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
       );
       _has_walks = false;
-      return json.decode('["placeholder": true]');
+      return json.decode('[{"placeholder": true}]');
     }
     } catch (err) {
       showDialog(
@@ -53,7 +53,7 @@ class _HomePageState extends State<HomePage> {
         builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
       );
       _has_walks = false;
-      return json.decode('["placeholder": true]');
+      return json.decode('[{"placeholder": true}]');
     }
   }
 

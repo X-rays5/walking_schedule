@@ -44,7 +44,7 @@ class _CalendarState extends State<Calendar> {
         });
         if (res.body == '[]') {
           _walks_today = false;
-          return json.decode('["placeholder": true]');
+          return json.decode('[{"placeholder": true}]');
         } else {
           _walks_today = true;
           return json.decode(res.body);
@@ -55,7 +55,7 @@ class _CalendarState extends State<Calendar> {
           builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
         );
         _walks_today = false;
-        return json.decode('["placeholder": true]');
+        return json.decode('[{"placeholder": true}]');
       }
     } catch (err) {
       showDialog(
@@ -63,7 +63,7 @@ class _CalendarState extends State<Calendar> {
         builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
       );
       _walks_today = false;
-      return json.decode('["placeholder": true]');
+      return json.decode('[{"placeholder": true}]');
     }
   }
 
