@@ -107,8 +107,12 @@ class _CalendarState extends State<Calendar> {
   }
 
   Widget _InterestedCount(Map<String, dynamic> json) {
-    int count = json['interested'][0] == '' ? 0 : json['interested'].length;
-    return Text('Interested: $count');
+    if (json['walker'] == 'none') {
+      int count = json['interested'][0] == '' ? 0 : json['interested'].length;
+      return Text('Interested: $count');
+    } else {
+      return Text('Walker: ${json['walker']}');
+    }
   }
 
   @override
