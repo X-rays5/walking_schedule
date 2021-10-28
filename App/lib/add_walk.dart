@@ -50,10 +50,7 @@ class _AddWalkState extends State<AddWalk> {
       var body = json.encode(data);
       var res = await http.post(url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid, "Content-Type": "application/json"}, body: body);
       if (res.statusCode == 200) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) => BuildPopUpDialog(context, 'Success', 'Walk has been added'),
-        ).then((value) => Navigator.of(context).pop());
+        Navigator.of(context).pop();
       } else {
         showDialog(
           context: context,

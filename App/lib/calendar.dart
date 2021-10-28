@@ -95,7 +95,9 @@ class _CalendarState extends State<Calendar> {
         foregroundColor: Theme.of(context).primaryColor,
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => AddWalk()));
+              builder: (BuildContext context) => AddWalk())).then((value) {
+             _Reload();
+          });
         },
         child: const Icon(Icons.add),
       );
@@ -154,7 +156,9 @@ class _CalendarState extends State<Calendar> {
                                   trailing: const Icon(Icons.arrow_forward),
                                   onTap: () {
                                     Navigator.of(context).push(MaterialPageRoute(
-                                        builder: (BuildContext context) => WalkView(snapshot.data![i])));
+                                        builder: (BuildContext context) => WalkView(snapshot.data![i]))).then((value) {
+                                          _Reload();
+                                    });
                                   },
                                 ),
                             ]
