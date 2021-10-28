@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:optimized_cached_image/optimized_cached_image.dart';
 
+import 'util.dart';
 import 'user_view.dart';
 
 class Users extends StatefulWidget {
@@ -13,6 +14,7 @@ class Users extends StatefulWidget {
 
 class _UsersState extends State<Users> {
   late Future<List> _users;
+  bool _has_users = false;
 
   @override
   initState() {
@@ -21,14 +23,29 @@ class _UsersState extends State<Users> {
   }
 
   Future<List> _GetUsers() async {
+    try {
     var url = Uri.parse('http://192.168.1.18:3000/users/0'); //TODO: replace this with a server url
     var res = await http.get(url, headers: {
       'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
     });
     if (res.statusCode == 200) {
+      _has_users = true;
       return json.decode(res.body);
     } else {
-      return await _GetUsers();
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
+      );
+      _has_users = false;
+      return json.decode('["placeholder": true]');
+    }
+    } catch (err) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
+      );
+      _has_users = false;
+      return json.decode('["placeholder": true]');
     }
   }
 
@@ -54,6 +71,9 @@ class _UsersState extends State<Users> {
           future: _users,
           builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
             if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              if (!_has_users) {
+                return const Text('No users found');
+              }
               return Column(
                 children: [
                   Expanded(

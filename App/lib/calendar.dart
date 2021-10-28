@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
+import 'util.dart';
 import 'add_walk.dart';
 import 'walk_view.dart';
 
@@ -28,29 +29,41 @@ class _CalendarState extends State<Calendar> {
   }
 
   Future<List> _GetWalks() async {
-    var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(_date)}'); //TODO: replace this with a server url
-    var res = await http.get(url, headers: {
-      'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
-    });
-    if (res.statusCode == 200) {
-      url = Uri.parse('http://192.168.1.18:3000/user/${FirebaseAuth.instance.currentUser!.displayName!}');
-      var admin = await http.get(url, headers: {
+    try {
+      var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(_date)}'); //TODO: replace this with a server url
+      var res = await http.get(url, headers: {
         'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
       });
-      print(json.decode(admin.body)['role'] == 'admin');
-      setState(() {
-        _is_admin = json.decode(admin.body)['role'] == 'admin';
-      });
-      if (res.body == '[]') {
-        _walks_today = false;
-        // needs to have actual data even if there is nothing
-        return json.decode('[{"walker":"none","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"20-10-2021","id":"yvNERw07CfcKKxbKWvOu"}]');
+      if (res.statusCode == 200) {
+        url = Uri.parse('http://192.168.1.18:3000/user/${FirebaseAuth.instance.currentUser!.displayName!}');
+        var admin = await http.get(url, headers: {
+          'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+        });
+        setState(() {
+          _is_admin = json.decode(admin.body)['role'] == 'admin';
+        });
+        if (res.body == '[]') {
+          _walks_today = false;
+          return json.decode('["placeholder": true]');
+        } else {
+          _walks_today = true;
+          return json.decode(res.body);
+        }
       } else {
-        _walks_today = true;
-        return json.decode(res.body);
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
+        );
+        _walks_today = false;
+        return json.decode('["placeholder": true]');
       }
-    } else {
-      return await _GetWalks();
+    } catch (err) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
+      );
+      _walks_today = false;
+      return json.decode('["placeholder": true]');
     }
   }
 

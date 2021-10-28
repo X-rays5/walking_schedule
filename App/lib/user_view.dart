@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:optimized_cached_image/optimized_cached_image.dart';
 import 'package:quiver/time.dart';
 import 'package:http/http.dart' as http;
+import 'package:walking_schedule/util.dart';
 
 import 'walk_view.dart';
 
@@ -41,7 +42,8 @@ class _UserViewState extends State<UserView> {
   }
 
   Future<List> _GetWalks() async {
-    var url = Uri.parse('http://192.168.1.18:3000/walks/${_username}/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}'); //TODO: replace this with a server url
+    try {
+    var url = Uri.parse('http://192.168.1.18:3000/walks/$_username/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}'); //TODO: replace this with a server url
     var res = await http.get(url, headers: {
       'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
     });
@@ -55,7 +57,20 @@ class _UserViewState extends State<UserView> {
         return json.decode(res.body);
       }
     } else {
-      return await _GetWalks();
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
+      );
+      _has_walks = false;
+      return json.decode('["placeholder": true]');
+    }
+    } catch (err) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
+      );
+      _has_walks = false;
+      return json.decode('["placeholder": true]');
     }
   }
 
