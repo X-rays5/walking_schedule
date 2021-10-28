@@ -246,6 +246,43 @@ module.exports = function(app: express.Express) {
         }
     })
 
+    app.delete('/walks/:id', (req, res) => {
+        try {
+            AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
+               if (authed) {
+                   DocExists('walks', req.params.id).then((exists) => {
+                       if (exists) {
+                           firebase.firestore().collection('walks').doc(req.params.id).get().then((doc) => {
+                              doc.ref.delete();
+                              res.json({
+                                  success: true
+                              });
+                           });
+                       } else {
+                           res.status(404);
+                           res.json({
+                               success: false,
+                               error: {
+                                   code: 'invalid/walk-id'
+                               }
+                           })
+                       }
+                   })
+               } else {
+                   res.status(403);
+                   res.send();
+               }
+            });
+        } catch (error) {
+            console.log(error);
+            res.status(400);
+            res.json({
+                success: false,
+                error: error
+            });
+        }
+    })
+
     app.get('/walks/:possiblefrom/:to', (req, res) => {
         try {
             Authed(req.header('X-API-Uid')).then((authed) => {
