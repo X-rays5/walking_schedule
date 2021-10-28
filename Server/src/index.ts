@@ -10,6 +10,7 @@ require('./routes/user')(app);
 require('./routes/walks')(app);
 
 // start the Express server
-app.listen(process.env.PORT, () => {
-    console.log( `server started at http://localhost:${process.env.PORT}` );
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log( `server started at http://localhost:${PORT}` );
 } );
