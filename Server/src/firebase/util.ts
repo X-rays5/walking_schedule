@@ -1,4 +1,5 @@
 import {firebase} from "./firebase";
+import {exists} from "fs";
 
 export async function CollectionExists(id: string): Promise<boolean> {
     return await firebase.firestore().collection(id).get().then((collection) => {
@@ -12,6 +13,14 @@ export async function DocExists(collection_id: string, doc_id: string): Promise<
     });
 }
 
+export async function UserExists(uid: string): Promise<boolean> {
+    return await firebase.auth().getUser(uid).then((user) => {
+        return true;
+    }).catch((error) => {
+        return false;
+    })
+}
+
 export async function IsUserName(name: string): Promise<boolean> {
     return await firebase.firestore().collection('users').where('name', '==', name).limit(1).get().then((doc) => {
        return !doc.empty;
@@ -19,8 +28,8 @@ export async function IsUserName(name: string): Promise<boolean> {
 }
 
 export async function IsUserId(id: string): Promise<boolean> {
-    return await firebase.firestore().collection('users').doc(id).get().then((doc) => {
-        return doc.exists;
+    return await UserExists(id).then((exists) => {
+        return exists;
     })
 }
 
@@ -33,10 +42,16 @@ export async function Authed(uid: string): Promise<boolean> {
 }
 
 export async function IsAdmin(id: string): Promise<boolean> {
-    return await firebase.firestore().collection('users')
-        .where('uid', '==', id).limit(1).get().then((doc) => {
-        return doc.docs.length > 0 && doc.docs[0].data().role == 'admin'
-    })
+    return await UserExists(id).then((exists) => {
+       if (exists) {
+           return firebase.firestore().collection('users')
+               .where('uid', '==', id).limit(1).get().then((doc) => {
+                   return doc.docs.length > 0 && doc.docs[0].data().role == 'admin'
+               })
+       } else {
+           return false;
+       }
+    });
 }
 
 export async function AuthedAdmin(uid: string): Promise<boolean> {
