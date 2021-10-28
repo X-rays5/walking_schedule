@@ -63,15 +63,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget _InterestedCount(Map<String, dynamic> json) {
-    if (json['walker'] == 'none') {
-      int count = json['interested'][0] == '' ? 0 : json['interested'].length;
-      return Text('Interested: $count'); 
-    } else {
-      return Text('Walker: ${json['walker']}');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,7 +141,7 @@ class _HomePageState extends State<HomePage> {
                             for (int i = 0; i < snapshot.data!.length; i++)
                               ListTile(
                                 title: Text(snapshot.data![i]['name']),
-                                subtitle: _InterestedCount(snapshot.data![i]),
+                                subtitle: InterestedCount(snapshot.data![i]),
                                 leading: const Icon(Icons.directions_walk),
                                 trailing: const Icon(Icons.arrow_forward),
                                 onTap: () {

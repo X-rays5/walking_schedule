@@ -20,3 +20,12 @@ Widget BuildPopUpDialog(BuildContext context, String title, String message) {
     ],
   );
 }
+
+Widget InterestedCount(Map<String, dynamic> json) {
+  if (json['walker'] == 'none') {
+    int count = json['interested'][0] == '' ? 0 : json['interested'].length;
+    return Text('Interested: $count');
+  } else {
+    return Text('Walker: ${json['walker']}');
+  }
+}
