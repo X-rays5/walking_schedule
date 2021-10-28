@@ -1,7 +1,6 @@
 import {firebase} from "../firebase/firebase";
-import {Authed, DocExists, GetUser, IsUserId, SendNotification, User} from "../firebase/util";
+import {Authed, GetUser, User} from "../firebase/util";
 import express from "express";
-import {firestore} from "firebase-admin";
 import date from 'date-and-time';
 
 interface Walk {
@@ -11,19 +10,6 @@ interface Walk {
 }
 
 module.exports = function(app: express.Express) {
-    app.get('/notify', (req, res) => {
-        SendNotification('test', 'woah').then((result) => {
-           res.send(result);
-        }).catch((error) => {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
-        })
-    });
-
     app.get("/user/:name", (req, res) => {
         Authed(req.header('X-API-Uid')).then((authed) => {
             if (authed) {

@@ -1,12 +1,13 @@
+import 'dart:convert';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:overlay_support/overlay_support.dart';
 import 'package:http/http.dart' as http;
 
+import 'util.dart';
 import 'home.dart';
 
 int createUniqueId() {
@@ -18,8 +19,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     content: NotificationContent(
       id: createUniqueId(),
       channelKey: 'basic_channel',
-      title: message.data['title'],
-      body: message.data['body'],
+      title: message.notification!.title,
+      body: message.notification!.body,
       notificationLayout: NotificationLayout.Default,
     ),
   );
@@ -35,7 +36,7 @@ Future<void> main() async {
         channelKey: 'basic_channel',
         channelName: 'Basic Notifications',
         defaultColor: Colors.black,
-        importance: NotificationImportance.High,
+        importance: NotificationImportance.Max,
         channelShowBadge: true,
       ),
     ],);
@@ -47,19 +48,18 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OverlaySupport(
-        child: MaterialApp(
-          title: 'walking schedule',
-          theme: ThemeData(
-            brightness: Brightness.light,
-          ),
-          darkTheme: ThemeData(
-            brightness: Brightness.dark,
-          ),
-          themeMode: ThemeMode.system,
-          debugShowCheckedModeBanner: false,
-          home: LoginPage(),
-        ));
+    return MaterialApp(
+      title: 'walking schedule',
+      theme: ThemeData(
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+      ),
+      themeMode: ThemeMode.system,
+      debugShowCheckedModeBanner: false,
+      home: LoginPage()
+    );
   }
 }
 
@@ -88,7 +88,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     registerNotification();
-    checkForInitialMessage();
     super.initState();
   }
 
@@ -96,7 +95,14 @@ class _LoginPageState extends State<LoginPage> {
     _messaging = FirebaseMessaging.instance;
     _messaging.subscribeToTopic('all');
 
+    _messaging.getToken().then((String? token) {
+      assert(token != null);
+    });
+
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onMessageOpenedApp.listen((message) async {
+      print('clicked');
+    });
 
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
@@ -109,35 +115,17 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      // For handling the received notifications
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         await AwesomeNotifications().createNotification(
           content: NotificationContent(
             id: createUniqueId(),
             channelKey: 'basic_channel',
-            title: message.data['title'],
-            body: message.data['body'],
+            title: message.notification!.title,
+            body: message.notification!.body,
             notificationLayout: NotificationLayout.Default,
           ),
         );
       });
-    }
-  }
-
-  checkForInitialMessage() async {
-    await Firebase.initializeApp();
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-
-    if (initialMessage != null) {
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: createUniqueId(),
-          channelKey: 'basic_channel',
-          title: initialMessage.data['title'],
-          body: initialMessage.data['body'],
-          notificationLayout: NotificationLayout.Default,
-        ),
-      );
     }
   }
 
@@ -147,11 +135,26 @@ class _LoginPageState extends State<LoginPage> {
         _authState = AuthState.kLoggedOut;
       });
     } else {
-      var url = Uri.parse('http://192.168.1.18:3000/user/${user.uid}'); //TODO: replace this with a server url
-      var res = await http.post(url);
-      if (res.statusCode == 200) {
+      try {
+        var url = Uri.parse('http://192.168.1.18:3000/user/${user.uid}'); //TODO: replace this with a server url
+        var res = await http.post(url);
+        if (res.statusCode == 200) {
+          setState(() {
+            _authState = AuthState.kLoggedIn;
+          });
+        } else {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
+          );
+        }
+      } catch (err) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', err.toString()),
+        );
         setState(() {
-          _authState = AuthState.kLoggedIn;
+          _authState = AuthState.kLoggedOut;
         });
       }
     }

@@ -73,12 +73,15 @@ export async function GetUser(name: string): Promise<User> {
     });
 }
 
-export async function SendNotification(title: String, body: String) {
+export async function SendNotification(title: string, body: string, data: any) {
     const message = {
+        notification:{
+            title: title,
+            body: body,
+        },
         data: {
             click_action: 'FLUTTER_NOTIFICATION_CLICK',
-            title: 'a title',
-            body: 'woah'
+            data: JSON.stringify(data),
         },
         topic: 'all'
     };

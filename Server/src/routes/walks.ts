@@ -1,7 +1,6 @@
 import {firebase} from "../firebase/firebase";
 import express from "express";
-import {Authed, AuthedAdmin, DocExists} from "../firebase/util";
-import {auth, firestore} from "firebase-admin";
+import {Authed, AuthedAdmin, DocExists, SendNotification} from "../firebase/util";
 import date from 'date-and-time';
 import { Response } from "express-serve-static-core";
 
@@ -189,7 +188,6 @@ module.exports = function(app: express.Express) {
                 if (authed) {
                     firebase.firestore().collection('users').doc()
                     if (CheckValidDate(req.params.date)) {
-                        console.log(req.body);
                         if (req.body.name !== undefined) {
                             const data = {
                                 date: GetDateFromStr(req.params.date),
@@ -199,6 +197,7 @@ module.exports = function(app: express.Express) {
                                 name: req.body.name
                             }
                             firebase.firestore().collection('walks').add(data).then((doc) => {
+                                SendNotification(`New Walk on ${data.formatteddate}`, data.name, data)
                                 res.json({
                                     walker: data.finalwalker,
                                     interested: data.interested,
@@ -253,10 +252,8 @@ module.exports = function(app: express.Express) {
                 if (authed) {
                     const test = GetDateFromStr(req.params.possiblefrom);
                     if (test != undefined && test > 0) {
-                        console.log('valid');
                         GetWalksFromTo(res, req.params.possiblefrom, req.params.to);
                     } else {
-                        console.log('invalid')
                         GetWalksOnDayUser(res, req.params.possiblefrom, req.params.to);
                     }
                 } else {
