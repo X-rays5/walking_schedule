@@ -138,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
       _messaging.unsubscribeFromTopic('all');
     } else {
       try {
-        var url = Uri.parse('http://192.168.1.18:3000/user/${user.uid}'); //TODO: replace this with a server url
+        var url = Uri.parse('https://walking-schedule.herokuapp.com/user/${user.uid}');
         var res = await http.post(url);
         if (res.statusCode == 200) {
           setState(() {

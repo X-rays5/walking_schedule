@@ -33,12 +33,12 @@ class _HomePageState extends State<HomePage> {
   Future<List> _GetWalks() async {
     DateTime cur_date = DateTime.now();
     try {
-      var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(DateTime.now())}/${DateFormat('yyyy-MM-dd').format(DateTime(cur_date.year, cur_date.month, daysInMonth(cur_date.year, cur_date.month)))}'); //TODO: replace this with a server url
+      var url = Uri.parse('https://walking-schedule.herokuapp.com/walks/${DateFormat('yyyy-MM-dd').format(DateTime.now())}/${DateFormat('yyyy-MM-dd').format(DateTime(cur_date.year, cur_date.month, daysInMonth(cur_date.year, cur_date.month)))}');
       var res = await http.get(url, headers: {
         'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
       });
       if (res.statusCode == 200) {
-        url = Uri.parse('http://192.168.1.18:3000/user/${FirebaseAuth.instance.currentUser!.displayName!}');
+        url = Uri.parse('https://walking-schedule.herokuapp.com/user/${FirebaseAuth.instance.currentUser!.displayName!}');
         var admin = await http.get(url, headers: {
           'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
         });

@@ -25,7 +25,7 @@ class _WalkViewState extends State<WalkView> {
   Future<void> _DeleteWalk(BuildContext context) async {
     try {
       var url = Uri.parse(
-          'http://192.168.1.18:3000/walks/${_walk['id']}'); //TODO: replace this with a server url
+          'https://walking-schedule.herokuapp.com/walks/${_walk['id']}');
       var res = await http.delete(
           url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
       if (res.statusCode == 200) {
@@ -50,7 +50,7 @@ class _WalkViewState extends State<WalkView> {
   Future<void> _Interested(BuildContext context, bool interested) async {
     try {
       var url = Uri.parse(
-          'http://192.168.1.18:3000/walks/${_walk['id']}/interested/$interested'); //TODO: replace this with a server url
+          'https://walking-schedule.herokuapp.com/walks/${_walk['id']}/interested/$interested');
       var res = await http.patch(
           url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
       if (res.statusCode == 200) {
@@ -78,7 +78,7 @@ class _WalkViewState extends State<WalkView> {
   Future<void> _SetWalker(BuildContext context, String name) async {
     try {
       var url = Uri.parse(
-          'http://192.168.1.18:3000/walks/${_walk['id']}/walker/$name'); //TODO: replace this with a server url
+          'https://walking-schedule.herokuapp.com/walks/${_walk['id']}/walker/$name');
       var res = await http.patch(
           url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
       if (res.statusCode == 200) {

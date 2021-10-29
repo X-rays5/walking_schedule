@@ -43,7 +43,7 @@ class _AddWalkState extends State<AddWalk> {
 
   void _PostWalk() async {
     try {
-      var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(_date)}'); //TODO: replace this with a server url
+      var url = Uri.parse('https://walking-schedule.herokuapp.com/walks/${DateFormat('yyyy-MM-dd').format(_date)}');
       Map data = {
         'name': _walk_name_controller.text,
       };

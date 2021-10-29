@@ -24,7 +24,7 @@ class _UsersState extends State<Users> {
 
   Future<List> _GetUsers() async {
     try {
-    var url = Uri.parse('http://192.168.1.18:3000/users/0'); //TODO: replace this with a server url
+    var url = Uri.parse('https://walking-schedule.herokuapp.com/users/0');
     var res = await http.get(url, headers: {
       'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
     });
@@ -95,7 +95,7 @@ class _UsersState extends State<Users> {
                               trailing: const Icon(Icons.arrow_forward),
                               onTap: () {
                                 Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (BuildContext context) => UserView(snapshot.data![i]['name'], snapshot.data![i]['photo'], snapshot.data![i]['role']))); // TODO: insert walk id
+                                    builder: (BuildContext context) => UserView(snapshot.data![i]['name'], snapshot.data![i]['photo'], snapshot.data![i]['role'])));
                               },
                             ),
                         ]
