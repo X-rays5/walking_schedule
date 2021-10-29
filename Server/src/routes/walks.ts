@@ -1,6 +1,7 @@
 import {firebase} from "../firebase/firebase";
+import * as firebase_t from 'firebase-admin';
 import express from "express";
-import {Authed, AuthedAdmin, DocExists, SendNotification} from "../firebase/util";
+import {Authed, AuthedAdmin, DocExists, IsUserName, SendNotification} from "../firebase/util";
 import date from 'date-and-time';
 import { Response } from "express-serve-static-core";
 
@@ -123,7 +124,68 @@ function GetWalkFromDate(res: Response<any, Record<string, any>, number>, date: 
     });
 }
 
-//TODO: figure out a way to clean this mess up
+function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>, walk_id: string, user_id: string, interested: boolean) {
+    firebase.firestore().collection('walks').doc(walk_id).get().then((walk) => {
+        if (walk.exists) {
+            firebase.auth().getUser(user_id).then((user) => {
+                if (walk.data().interested.length == 1) {
+                    if (interested) {
+                        walk.ref.update({
+                            interested: firebase_t.firestore.FieldValue.arrayRemove(''),
+                        });
+                    } else {
+                        walk.ref.update({
+                            interested: firebase_t.firestore.FieldValue.arrayUnion(''),
+                        });
+                    }
+                }
+                walk.ref.update({
+                    interested: interested ? firebase_t.firestore.FieldValue.arrayUnion(user.displayName) : firebase_t.firestore.FieldValue.arrayRemove(user.displayName),
+                }).then((doc) => {
+                    firebase.firestore().collection('walks').doc(walk_id).get().then((updated_walk) => {
+                        res.json({
+                            walker: updated_walk.data().finalwalker,
+                            interested: updated_walk.data().interested,
+                            name: updated_walk.data().name,
+                            date: updated_walk.data().formatteddate,
+                            id: updated_walk.id
+                        });
+                    })
+                }).catch((error) => {
+                    console.log(error);
+                    res.status(500);
+                    res.json({
+                        success: false,
+                        error: error
+                    });
+                });
+            }).catch((error) => {
+                console.log(error);
+                res.status(400);
+                res.json({
+                    success: false,
+                    error: error
+                });
+            })
+        } else {
+            res.status(404);
+            res.json({
+                success: false,
+                error: {
+                    code: 'invalid/not-found'
+                }
+            });
+        }
+    }).catch((error) => {
+        console.log(error);
+        res.status(400);
+        res.json({
+            success: false,
+            error: error
+        });
+    });
+}
+
 module.exports = function(app: express.Express) {
     // for testing purposes
     app.get("/addtestwalk/:date", (req, res) => {
@@ -366,4 +428,103 @@ module.exports = function(app: express.Express) {
             });
         }
     });
+
+    app.patch('/walks/:id/interested/:bool', (req, res) => {
+       try {
+           Authed(req.header('X-API-Uid')).then((authed) => {
+               if (authed) {
+                   switch (req.params.bool) {
+                       case 'true':
+                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid'), true);
+                           break;
+                       case 'false':
+                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid'), false);
+                           break;
+                       default:
+                           res.status(400);
+                           res.json({
+                               success: false,
+                               error: {
+                                   code: 'invalid/bool'
+                               }
+                           });
+                           break;
+                   }
+               } else  {
+                   res.status(403);
+                   res.send();
+               }
+           });
+       } catch (error) {
+           console.log(error);
+           res.status(400);
+           res.json({
+               success: false,
+               error: error
+           });
+       }
+    });
+
+    app.patch('/walks/:walk_id/walker/:name', (req, res) => {
+        try {
+            AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
+                if (authed) {
+                    IsUserName(req.params.name).then((exists) => {
+                        if (exists) {
+                            firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((walk) => {
+                                if (walk.exists) {
+                                    walk.ref.update({
+                                        finalwalker: req.params.name
+                                    }).then((doc) => {
+                                        firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((updated_walk) => {
+                                            res.json({
+                                                walker: updated_walk.data().finalwalker,
+                                                interested: updated_walk.data().interested,
+                                                name: updated_walk.data().name,
+                                                date: updated_walk.data().formatteddate,
+                                                id: updated_walk.id
+                                            });
+                                        })
+                                    }).catch((error) => {
+                                        console.log(error);
+                                        res.status(400);
+                                        res.json({
+                                            success: false,
+                                            error: error
+                                        });
+                                    })
+                                } else {
+                                    res.status(404);
+                                    res.json({
+                                        success: false,
+                                        error: {
+                                            code: 'invalid/not-found'
+                                        }
+                                    });
+                                }
+                            })
+                        } else {
+                            res.status(400);
+                            res.json({
+                                success: false,
+                                error: {
+                                    code: 'invalid/user'
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    res.status(403);
+                    res.send();
+                }
+            })
+        } catch (error) {
+            console.log(error);
+            res.status(400);
+            res.json({
+                success: false,
+                error: error
+            });
+        }
+    })
 }

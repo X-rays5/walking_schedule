@@ -69,8 +69,9 @@ module.exports = function(app: express.Express) {
             collection.doc(user.uid).get().then((value => {
                 if (value.exists) {
                     res.json({
-                        success: true,
-                        message: 'user already exists',
+                        username: value.data().name,
+                        photo: value.data().name,
+                        role: value.data().name,
                     });
                 } else {
                     const data = {
@@ -116,7 +117,6 @@ module.exports = function(app: express.Express) {
                             role: val.data().role
                         });
                     });
-                    users.pop(); // if we don't pop it sends a random empty member for some reason
                     res.json(users);
                 }).catch((error) => {
                     console.log(error);
