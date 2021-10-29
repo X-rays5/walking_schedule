@@ -31,6 +31,7 @@ class _UserViewState extends State<UserView> {
 
   late Future<List> _walks;
   bool _has_walks = false;
+  bool _is_admin = false;
 
   @override
   initState() {
@@ -48,6 +49,13 @@ class _UserViewState extends State<UserView> {
         'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
       });
       if (res.statusCode == 200) {
+        url = Uri.parse('http://192.168.1.18:3000/user/${FirebaseAuth.instance.currentUser!.displayName!}');
+        var admin = await http.get(url, headers: {
+          'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+        });
+        setState(() {
+          _is_admin = json.decode(admin.body)['role'] == 'admin';
+        });
         if (res.body == '[]') {
           _has_walks = false;
           // needs to have actual data even if there is nothing
@@ -189,7 +197,7 @@ class _UserViewState extends State<UserView> {
                               onTap: () {
                                 Navigator.of(context).push(MaterialPageRoute(
                                     builder: (BuildContext context) =>
-                                        WalkView(snapshot.data![i])));
+                                        WalkView(snapshot.data![i], _is_admin)));
                               },
                             ),
                         ],

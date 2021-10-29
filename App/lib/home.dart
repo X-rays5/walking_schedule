@@ -22,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   late Future<List> _walks;
   bool _has_walks = false;
+  bool _is_admin = false;
 
   @override
   initState() {
@@ -37,6 +38,13 @@ class _HomePageState extends State<HomePage> {
         'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
       });
       if (res.statusCode == 200) {
+        url = Uri.parse('http://192.168.1.18:3000/user/${FirebaseAuth.instance.currentUser!.displayName!}');
+        var admin = await http.get(url, headers: {
+          'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+        });
+        setState(() {
+          _is_admin = json.decode(admin.body)['role'] == 'admin';
+        });
         if (res.body == '[]') {
           _has_walks = false;
           return json.decode('[{"placeholder": true}]');
@@ -151,7 +159,9 @@ class _HomePageState extends State<HomePage> {
                                 trailing: const Icon(Icons.arrow_forward),
                                 onTap: () {
                                   Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (BuildContext context) => WalkView(snapshot.data![i])));
+                                      builder: (BuildContext context) => WalkView(snapshot.data![i], _is_admin))).then((value) {
+                                    _Reload();
+                                  });
                                 },
                               ),
                           ]

@@ -151,7 +151,7 @@ class _CalendarState extends State<Calendar> {
                                   trailing: const Icon(Icons.arrow_forward),
                                   onTap: () {
                                     Navigator.of(context).push(MaterialPageRoute(
-                                        builder: (BuildContext context) => WalkView(snapshot.data![i]))).then((value) {
+                                        builder: (BuildContext context) => WalkView(snapshot.data![i], _is_admin))).then((value) {
                                           _Reload();
                                     });
                                   },

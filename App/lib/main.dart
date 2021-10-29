@@ -134,6 +134,8 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _authState = AuthState.kLoggedOut;
       });
+      _messaging.unsubscribeFromTopic('admin');
+      _messaging.unsubscribeFromTopic('all');
     } else {
       try {
         var url = Uri.parse('http://192.168.1.18:3000/user/${user.uid}'); //TODO: replace this with a server url
@@ -142,6 +144,10 @@ class _LoginPageState extends State<LoginPage> {
           setState(() {
             _authState = AuthState.kLoggedIn;
           });
+          Map<String, dynamic> body = json.decode(res.body);
+          if (body.containsKey('role') && body['role'] == 'admin') {
+            _messaging.subscribeToTopic('admin');
+          }
         } else {
           showDialog(
             context: context,
