@@ -32,21 +32,26 @@ class _HomePageState extends State<HomePage> {
   Future<List> _GetWalks() async {
     DateTime cur_date = DateTime.now();
     try {
-    var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(DateTime.now())}/${DateFormat('yyyy-MM-dd').format(DateTime(cur_date.year, cur_date.month, daysInMonth(cur_date.year, cur_date.month)))}'); //TODO: replace this with a server url
-    var res = await http.get(url, headers: {
-      'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
-    });
-    if (res.statusCode == 200) {
-      _has_walks = true;
-      return json.decode(res.body);
-    } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
-      );
-      _has_walks = false;
-      return json.decode('[{"placeholder": true}]');
-    }
+      var url = Uri.parse('http://192.168.1.18:3000/walks/${DateFormat('yyyy-MM-dd').format(DateTime.now())}/${DateFormat('yyyy-MM-dd').format(DateTime(cur_date.year, cur_date.month, daysInMonth(cur_date.year, cur_date.month)))}'); //TODO: replace this with a server url
+      var res = await http.get(url, headers: {
+        'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
+      });
+      if (res.statusCode == 200) {
+        if (res.body == '[]') {
+          _has_walks = false;
+          return json.decode('[{"placeholder": true}]');
+        } else {
+          _has_walks = true;
+          return json.decode(res.body);
+        }
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => BuildPopUpDialog(context, 'Error', 'code: ${res.statusCode}\nbody: ${res.body}'),
+        );
+        _has_walks = false;
+        return json.decode('[{"placeholder": true}]');
+      }
     } catch (err) {
       showDialog(
         context: context,
