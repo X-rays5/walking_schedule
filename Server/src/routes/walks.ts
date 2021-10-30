@@ -14,7 +14,7 @@ interface Walk {
 }
 
 function GetDateFromStr(YYYYMD: string): number {
-    return parseInt(date.format(new Date(YYYYMD), 'DMYYYY'))
+    return parseInt(date.format(new Date(YYYYMD), 'YYYYMD'))
 }
 
 function CheckValidDate(YYYYMD: string): boolean {
