@@ -88,7 +88,7 @@ export async function GetUser(name: string): Promise<User> {
     });
 }
 
-export async function SendNotification(title: string, body: string, data: any) {
+export async function SendNotification(title: string, body: string, topic: string, data: any) {
     const message = {
         notification:{
             title: title,
@@ -98,7 +98,7 @@ export async function SendNotification(title: string, body: string, data: any) {
             click_action: 'FLUTTER_NOTIFICATION_CLICK',
             data: JSON.stringify(data),
         },
-        topic: 'all'
+        topic: topic
     };
     return await firebase.messaging().send(message)
         .then((response) => {
