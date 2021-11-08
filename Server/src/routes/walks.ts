@@ -188,29 +188,6 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
 }
 
 module.exports = function(app: express.Express) {
-    // for testing purposes
-    app.get("/addtestwalk/:date", (req, res) => {
-        if (CheckValidDate(req.params.date)) {
-            const data = {
-                date: GetDateFromStr(req.params.date),
-                finalwalker: 'none',
-                interested: ['Hans', 'Piet', 'Papzakje'],
-                name: 'test walk',
-                formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY'),
-            }
-            firebase.firestore().collection('walks').add(data);
-            res.send('');
-        } else {
-            res.status(400);
-            res.json({
-                success: false,
-                error: {
-                    code: 'invalid/date',
-                }
-            })
-        }
-    });
-
     // date are expected as yyyy-MM-DD
     app.get('/walks/:possibleid', (req, res) => {
         try {
