@@ -16,8 +16,8 @@ module.exports = function(app: express.Express) {
                 GetUser(req.params.name).then((user) => {
                     // get start and end date of current month
                     const cur_date = new Date(), y = cur_date.getFullYear(), m = cur_date.getMonth();
-                    const start_date = parseInt(date.format(new Date(y, m, 1), 'YYYYMD'));
-                    const end_date = parseInt(date.format(new Date(y, m + 1, 0), 'YYYYMD'));
+                    const start_date = parseInt(date.format(new Date(y, m, 1), 'YYYYMMDD'));
+                    const end_date = parseInt(date.format(new Date(y, m + 1, 0), 'YYYYMMDD'));
 
                     firebase.firestore().collection('walks')
                         .where('finalwalker', '==', user.name)

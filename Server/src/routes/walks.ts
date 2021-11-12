@@ -13,12 +13,12 @@ interface Walk {
     id: string
 }
 
-function GetDateFromStr(YYYYMD: string): number {
-    return parseInt(date.format(new Date(YYYYMD), 'YYYYMD'))
+function GetDateFromStr(YYYYMMDD: string): number {
+    return parseInt(date.format(new Date(YYYYMMDD), 'YYYYMMDD'))
 }
 
-function CheckValidDate(YYYYMD: string): boolean {
-    const check = GetDateFromStr(YYYYMD);
+function CheckValidDate(YYYYMMDD: string): boolean {
+    const check = GetDateFromStr(YYYYMMDD);
     return check != undefined && check > 0;
 }
 
