@@ -143,7 +143,6 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
                     interested: interested ? firebase_t.firestore.FieldValue.arrayUnion(user.displayName) : firebase_t.firestore.FieldValue.arrayRemove(user.displayName),
                 }).then((doc) => {
                     firebase.firestore().collection('walks').doc(walk_id).get().then((updated_walk) => {
-                        SendNotification(updated_walk.data().name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', updated_walk);
                         res.json({
                             walker: updated_walk.data().finalwalker,
                             interested: updated_walk.data().interested,
@@ -160,6 +159,7 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
                         error: error
                     });
                 });
+                SendNotification(walk.data().name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', walk.data());
             }).catch((error) => {
                 console.log(error);
                 res.status(400);
@@ -236,23 +236,14 @@ module.exports = function(app: express.Express) {
                                 interested: [''],
                                 name: req.body.name
                             }
-                            firebase.firestore().collection('walks').add(data).then((doc) => {
-                                SendNotification(`New Walk on ${data.formatteddate}`, data.name, 'all', data);
-                                res.json({
-                                    walker: data.finalwalker,
-                                    interested: data.interested,
-                                    name: data.name,
-                                    date: data.formatteddate,
-                                    id: doc.id
-                                });
-                            }).catch((error) => {
-                                console.log(error);
-                                res.status(400);
-                                res.json({
-                                    success: false,
-                                    error: error
-                                });
-                            })
+                            firebase.firestore().collection('walks').add(data);
+                            res.json({
+                                walker: data.finalwalker,
+                                interested: data.interested,
+                                name: data.name,
+                                date: data.formatteddate,
+                            });
+                            SendNotification(`New Walk on ${data.formatteddate}`, data.name, 'all', data);
                         } else {
                             res.status(400);
                             res.json({
@@ -455,7 +446,6 @@ module.exports = function(app: express.Express) {
                                         finalwalker: req.params.name
                                     }).then((doc) => {
                                         firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((updated_walk) => {
-                                            SendNotification(updated_walk.data().name, `${req.params.name} has been set as walker`, 'all', updated_walk);
                                             res.json({
                                                 walker: updated_walk.data().finalwalker,
                                                 interested: updated_walk.data().interested,
@@ -472,6 +462,7 @@ module.exports = function(app: express.Express) {
                                             error: error
                                         });
                                     })
+                                    SendNotification(walk.data().name, `${req.params.name} has been set as walker`, 'all', walk.data());
                                 } else {
                                     res.status(404);
                                     res.json({
