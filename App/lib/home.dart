@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -44,6 +45,7 @@ class _HomePageState extends State<HomePage> {
         });
         setState(() {
           _is_admin = json.decode(admin.body)['role'] == 'admin';
+          FirebaseMessaging.instance.subscribeToTopic('admin');
         });
         if (res.body == '[]') {
           _has_walks = false;
@@ -154,7 +156,7 @@ class _HomePageState extends State<HomePage> {
                             for (int i = 0; i < snapshot.data!.length; i++)
                               ListTile(
                                 title: Text(snapshot.data![i]['name']),
-                                subtitle: InterestedCount(snapshot.data![i]),
+                                subtitle: Text('${InterestedCount(snapshot.data![i])}\nDate: ${snapshot.data![i]['date']}'),
                                 leading: const Icon(Icons.directions_walk),
                                 trailing: const Icon(Icons.arrow_forward),
                                 onTap: () {

@@ -146,7 +146,7 @@ class _CalendarState extends State<Calendar> {
                               for (int i = 0; i < snapshot.data!.length; i++)
                                 ListTile(
                                   title: Text(snapshot.data![i]['name']),
-                                  subtitle: InterestedCount(snapshot.data![i]),
+                                  subtitle: Text(InterestedCount(snapshot.data![i])),
                                   leading: const Icon(Icons.directions_walk),
                                   trailing: const Icon(Icons.arrow_forward),
                                   onTap: () {
