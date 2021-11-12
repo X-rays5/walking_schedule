@@ -91,15 +91,13 @@ class _AddWalkState extends State<AddWalk> {
           icon: const Icon(Icons.cancel_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+              onPressed: (){_Submit();},
+              icon: const Icon(Icons.check)
+          )
+        ],
         title: const Text('Add Walk'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).backgroundColor,
-        foregroundColor: Theme.of(context).primaryColor,
-        onPressed: () => {
-          _Submit()
-        },
-        child: const Icon(Icons.check),
       ),
       body: Column(
         children: [
