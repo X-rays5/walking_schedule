@@ -188,6 +188,10 @@ class _UserViewState extends State<UserView> {
                         scrollDirection: Axis.vertical,
                         shrinkWrap: true,
                         children: [
+                          Center(
+                            child: Text('Walks in period: ${snapshot.data!.length}', style: const TextStyle(fontSize: 25.0)),
+                          ),
+                          const Divider(thickness: 2.0,),
                           for (int i = 0; i < snapshot.data!.length; i++)
                             ListTile(
                               title: Text(snapshot.data![i]['name']),
