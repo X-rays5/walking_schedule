@@ -133,7 +133,7 @@ class _HomePageState extends State<HomePage> {
       body: Column(
         children: [
           const Center(
-            child: Text('\nUpcoming events\n',
+            child: Text('\nUpcoming this month \n',
             textAlign:
             TextAlign.center,style:
             TextStyle(fontWeight: FontWeight.bold,fontSize: 25.0),
