@@ -44,8 +44,13 @@ class _HomePageState extends State<HomePage> {
           'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
         });
         setState(() {
-          _is_admin = json.decode(admin.body)['role'] == 'admin';
-          FirebaseMessaging.instance.subscribeToTopic('admin');
+          if (json.decode(admin.body)['role'] == 'admin') {
+            _is_admin = true;
+            FirebaseMessaging.instance.subscribeToTopic('admin');
+          } else {
+            _is_admin = false;
+            FirebaseMessaging.instance.unsubscribeFromTopic('admin');
+          }
         });
         if (res.body == '[]') {
           _has_walks = false;
