@@ -9,6 +9,11 @@ app.use(express.json())
 require('./routes/user')(app);
 require('./routes/walks')(app);
 
+// endpoint to check if api up
+app.get('/', (req, res) => {
+    res.json({'status': 'up'});
+})
+
 // start the Express server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
