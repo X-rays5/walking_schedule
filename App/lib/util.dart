@@ -23,7 +23,8 @@ Widget BuildPopUpDialog(BuildContext context, String title, String message) {
 
 String InterestedCount(Map<String, dynamic> json) {
   if (json['walker'] == 'none') {
-    int count = json['interested'][0] == '' ? 0 : json['interested'].length;
+    Map<String, dynamic> interested = json['interested'];
+    int count = interested.length == 1 ? 0 : interested.length - 1; // theres always a placeholder to ensure no exceptions
     return 'Interested: $count';
   } else {
     return 'Walker: ${json['walker']}';

@@ -128,19 +128,11 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
     firebase.firestore().collection('walks').doc(walk_id).get().then((walk) => {
         if (walk.exists) {
             firebase.auth().getUser(user_id).then((user) => {
-                if (walk.data().interested.length == 1) {
-                    if (interested) {
-                        walk.ref.update({
-                            interested: firebase_t.firestore.FieldValue.arrayRemove(''),
-                        });
-                    } else {
-                        walk.ref.update({
-                            interested: firebase_t.firestore.FieldValue.arrayUnion(''),
-                        });
-                    }
-                }
+                let interestedobj = walk.data().interested;
+                // @ts-ignore
+                interestedobj[user.displayName] = interested;
                 walk.ref.update({
-                    interested: interested ? firebase_t.firestore.FieldValue.arrayUnion(user.displayName) : firebase_t.firestore.FieldValue.arrayRemove(user.displayName),
+                    interested: interestedobj
                 }).then((doc) => {
                     firebase.firestore().collection('walks').doc(walk_id).get().then((updated_walk) => {
                         res.json({
@@ -233,7 +225,7 @@ module.exports = function(app: express.Express) {
                                 date: GetDateFromStr(req.params.date),
                                 finalwalker: 'none',
                                 formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY'),
-                                interested: [''],
+                                interested: {placeholder: false},
                                 name: req.body.name
                             }
                             firebase.firestore().collection('walks').add(data);
