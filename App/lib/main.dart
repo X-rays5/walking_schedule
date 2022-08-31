@@ -38,6 +38,7 @@ Future<void> main() async {
         defaultColor: Colors.black,
         importance: NotificationImportance.Max,
         channelShowBadge: true,
+        channelDescription: '',
       ),
     ],);
   runApp(const App());
@@ -138,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
       _messaging.unsubscribeFromTopic('all');
     } else {
       try {
-        var url = Uri.parse('https://walking-schedule.herokuapp.com/user/${user.uid}');
+        var url = Uri.parse('https://api.walking-schedule.scheenen.dev/user/${user.uid}');
         var res = await http.post(url);
         if (res.statusCode == 200) {
           setState(() {

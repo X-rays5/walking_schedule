@@ -24,7 +24,7 @@ class _UsersState extends State<Users> {
 
   Future<List> _GetUsers() async {
     try {
-    var url = Uri.parse('https://walking-schedule.herokuapp.com/users/0');
+    var url = Uri.parse('https://api.walking-schedule.scheenen.dev/users/0');
     var res = await http.get(url, headers: {
       'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
     });

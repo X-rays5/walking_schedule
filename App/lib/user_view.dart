@@ -44,12 +44,12 @@ class _UserViewState extends State<UserView> {
 
   Future<List> _GetWalks() async {
     try {
-      var url = Uri.parse('https://walking-schedule.herokuapp.com/walks/$_username/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}');
+      var url = Uri.parse('https://api.walking-schedule.scheenen.dev/walks/$_username/${DateFormat('yyyy-MM-dd').format(_start_date)}/${DateFormat('yyyy-MM-dd').format(_end_date)}');
       var res = await http.get(url, headers: {
         'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
       });
       if (res.statusCode == 200) {
-        url = Uri.parse('https://walking-schedule.herokuapp.com/user/${FirebaseAuth.instance.currentUser!.displayName!}');
+        url = Uri.parse('https://api.walking-schedule.scheenen.dev/user/${FirebaseAuth.instance.currentUser!.displayName!}');
         var admin = await http.get(url, headers: {
           'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
         });

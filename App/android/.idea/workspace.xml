@@ -4,21 +4,24 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b01849df-960c-4642-bcaf-51330eb4041d" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/App.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/App.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/discord.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/discord.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/libraries/KotlinJavaRuntime.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/runConfigurations/main_dart.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+    <list default="true" id="509ba85e-181a-4a74-8f9e-fac8cacc26d7" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/analysis_options.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Server/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Server/.idea/GitLink.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Server/.idea/aws.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Server/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Server/vercel.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/libraries/Dart_Packages.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/libraries/Dart_Packages.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/libraries/Dart_SDK.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/libraries/Flutter_Plugins.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/libraries/Flutter_Plugins.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/discord.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../lib/calendar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../lib/calendar.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../lib/user_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../lib/user_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../lib/walk_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../lib/walk_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/src/routes/user.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/src/routes/user.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/src/routes/walks.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/src/routes/walks.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/src/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,10 +33,27 @@
       <ProjectState />
     </projectState>
   </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="android" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
-  <component name="ProjectId" id="200JsaU9zzEGZwSKnprbNHqqSb8" />
+  <component name="ProjectId" id="2DuTnCqahGEiTWZJ0ZoUxiuKyzi" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -42,30 +62,21 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="cidr.known.project.marker" value="true" />
     <property name="dart.analysis.tool.window.visible" value="false" />
+    <property name="settings.editor.selected.configurable" value="experimental" />
     <property name="show.migrate.to.gradle.popup" value="false" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="b01849df-960c-4642-bcaf-51330eb4041d" name="Default Changelist" comment="" />
-      <created>1635175779142</created>
+      <changelist id="509ba85e-181a-4a74-8f9e-fac8cacc26d7" name="Changes" comment="" />
+      <created>1661548134840</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1635175779142</updated>
+      <updated>1661548134840</updated>
     </task>
     <servers />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>
