@@ -3,7 +3,7 @@ import {exists} from "fs";
 
 export async function CollectionExists(id: string): Promise<boolean> {
     return await firebase.firestore().collection(id).get().then((collection) => {
-        return collection.docs.length > 0; // since a collection can only exists when there is at least 1 doc this works
+        return collection.docs.length > 0; // since a collection can only exist when there is at least 1 doc this works
     })
 }
 
@@ -33,7 +33,7 @@ export async function IsUserId(id: string): Promise<boolean> {
     })
 }
 
-export async function Authed(uid: string): Promise<boolean> {
+export async function Authed(uid: string | undefined): Promise<boolean> {
     if (uid !== undefined && uid.length > 0) {
         return await IsUserId(uid);
     } else {
@@ -54,7 +54,7 @@ export async function IsAdmin(id: string): Promise<boolean> {
     });
 }
 
-export async function AuthedAdmin(uid: string): Promise<boolean> {
+export async function AuthedAdmin(uid: string | undefined): Promise<boolean> {
     if (uid !== undefined && uid.length > 0) {
         return await IsAdmin(uid);
     } else {
@@ -89,15 +89,10 @@ export async function GetUser(name: string): Promise<User> {
 }
 
 export async function SendNotification(title: string, body: string, topic: string, data: any) {
+    data.title = title;
+    data.body = body;
     const message = {
-        notification:{
-            title: title,
-            body: body,
-        },
-        data: {
-            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-            data: JSON.stringify(data),
-        },
+        data: data,
         topic: topic
     };
     return await firebase.messaging().send(message)

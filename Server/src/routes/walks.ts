@@ -4,6 +4,7 @@ import express from "express";
 import {Authed, AuthedAdmin, DocExists, IsUserName, SendNotification} from "../firebase/util";
 import date from 'date-and-time';
 import { Response } from "express-serve-static-core";
+import {exists} from "fs";
 
 interface Walk {
     walker: string,
@@ -81,10 +82,10 @@ function GetWalksOnDayUser(res: Response<any, Record<string, any>, number>, name
 function GetWalkFromId(res: Response<any, Record<string, any>, number>, doc_id: string) {
     firebase.firestore().collection('walks').doc(doc_id).get().then((doc) => {
         const walk: Walk = {
-            walker: doc.data().finalwalker,
-            interested: doc.data().interested,
-            name: doc.data().name,
-            date: doc.data().formatteddate,
+            walker: doc.data()?.finalwalker,
+            interested: doc.data()?.interested,
+            name: doc.data()?.name,
+            date: doc.data()?.formatteddate,
             id: doc.id
         }
         res.json(walk);
@@ -128,7 +129,7 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
     firebase.firestore().collection('walks').doc(walk_id).get().then((walk) => {
         if (walk.exists) {
             firebase.auth().getUser(user_id).then((user) => {
-                let interestedobj = walk.data().interested;
+                let interestedobj = walk.data()?.interested;
                 // @ts-ignore
                 interestedobj[user.displayName] = interested;
                 walk.ref.update({
@@ -136,10 +137,10 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
                 }).then((doc) => {
                     firebase.firestore().collection('walks').doc(walk_id).get().then((updated_walk) => {
                         res.json({
-                            walker: updated_walk.data().finalwalker,
-                            interested: updated_walk.data().interested,
-                            name: updated_walk.data().name,
-                            date: updated_walk.data().formatteddate,
+                            walker: updated_walk.data()?.finalwalker,
+                            interested: updated_walk.data()?.interested,
+                            name: updated_walk.data()?.name,
+                            date: updated_walk.data()?.formatteddate,
                             id: updated_walk.id
                         });
                     })
@@ -151,7 +152,7 @@ function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>
                         error: error
                     });
                 });
-                SendNotification(walk.data().name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', walk.data());
+                SendNotification(walk.data()?.name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', walk.data());
             }).catch((error) => {
                 console.log(error);
                 res.status(400);
@@ -268,6 +269,61 @@ module.exports = function(app: express.Express) {
             });
         }
     })
+
+    app.patch('walks/:walk_id/date/:date', (req, res) => {
+       try {
+           if (CheckValidDate(req.params.date)) {
+               AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
+                   if (authed) {
+                       DocExists('walks', req.params.walk_id).then(exists => {
+                           firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((walk) => {
+                               if (walk.exists) {
+                                   walk.ref.update({
+                                        date: GetDateFromStr(req.params.date),
+                                        formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY')
+                                   }).then((doc) => {
+                                            firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((updated_walk) => {
+                                           res.json({
+                                               walker: updated_walk.data()?.finalwalker,
+                                               interested: updated_walk.data()?.interested,
+                                               name: updated_walk.data()?.name,
+                                               date: updated_walk.data()?.formatteddate,
+                                               id: updated_walk.id
+                                           });
+                                       });
+                                   });
+                               } else {
+                                   console.log('walk does not exist');
+                                      res.status(404);
+                                      res.json({
+                                        success: false,
+                                        error: {
+                                             code: 'invalid/not-found'
+                                        }
+                                      });
+                               }
+                           });
+                       });
+                   }
+               });
+           } else {
+                res.status(400);
+                res.json({
+                     success: false,
+                     error: {
+                          code: 'invalid/date'
+                     }
+                });
+           }
+       } catch (error) {
+           console.log(error);
+           res.status(500);
+           res.json({
+               success: false,
+               error: error
+           });
+       }
+    });
 
     app.delete('/walks/:id', (req, res) => {
         try {
@@ -396,10 +452,10 @@ module.exports = function(app: express.Express) {
                if (authed) {
                    switch (req.params.bool) {
                        case 'true':
-                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid'), true);
+                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid')!, true);
                            break;
                        case 'false':
-                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid'), false);
+                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid')!, false);
                            break;
                        default:
                            res.status(400);
@@ -439,10 +495,10 @@ module.exports = function(app: express.Express) {
                                     }).then((doc) => {
                                         firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((updated_walk) => {
                                             res.json({
-                                                walker: updated_walk.data().finalwalker,
-                                                interested: updated_walk.data().interested,
-                                                name: updated_walk.data().name,
-                                                date: updated_walk.data().formatteddate,
+                                                walker: updated_walk.data()?.finalwalker,
+                                                interested: updated_walk.data()?.interested,
+                                                name: updated_walk.data()?.name,
+                                                date: updated_walk.data()?.formatteddate,
                                                 id: updated_walk.id
                                             });
                                         })
@@ -454,7 +510,7 @@ module.exports = function(app: express.Express) {
                                             error: error
                                         });
                                     })
-                                    SendNotification(walk.data().name, `${req.params.name} has been set as walker`, 'all', walk.data());
+                                    SendNotification(walk.data()?.name, `${req.params.name} has been set as walker`, 'all', walk.data());
                                 } else {
                                     res.status(404);
                                     res.json({

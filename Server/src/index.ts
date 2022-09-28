@@ -28,8 +28,17 @@ if (process.env.FIXLEGACY === 'true') {
 }
 
 import express from 'express';
+import {Request, Response} from 'express';
 const app = express();
+
+const request_logger = (req: Request, res: Response, next: () => void) => {
+    console.log(`Receiving request from ${req.ip} to ${req.url}`);
+    next();
+};
+
 app.use(express.json())
+app.use(request_logger);
+app.set('trust proxy', true);
 
 // import all routes
 require('./routes/user')(app);
@@ -39,6 +48,12 @@ require('./routes/walks')(app);
 app.get('/', (req, res) => {
     res.json({'status': 'up'});
 })
+
+app.all('*', (req, res) => {
+    console.log(`Sending 404 to ${req.ip} to ${req.url}`);
+    res.status(404);
+    res.json({'error': 'invalid/url'});
+});
 
 // start the Express server
 const PORT = process.env.PORT || 3000;

@@ -61,7 +61,7 @@ module.exports = function(app: express.Express) {
         });
     });
 
-    // this endpoint is called on every login of a user so we can use this to access user data
+    // this endpoint is called on every login of a user, so we can use this to access user data
     // and then store it for later use
     app.post("/user/:uid", (req, res) => {
         firebase.auth().getUser(req.params.uid).then((user) => {
@@ -69,9 +69,9 @@ module.exports = function(app: express.Express) {
             collection.doc(user.uid).get().then((value => {
                 if (value.exists) {
                     res.json({
-                        username: value.data().name,
-                        photo: value.data().name,
-                        role: value.data().name,
+                        username: value.data()?.name,
+                        photo: value.data()?.name,
+                        role: value.data()?.name,
                     });
                 } else {
                     const data = {
