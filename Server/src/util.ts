@@ -11,7 +11,7 @@ export function ResponseError(res: Response, error: string, status: number) {
             code: status
         }
     });
-    console.error(error);
+    console.error(`[RESPONSE ERROR]: IP: ${res.req.ip}, URL: ${res.req.url}, ERROR: ${error}`);
 }
 
 export function ResponseSuccess(res: Response, data: Object) {
@@ -20,6 +20,7 @@ export function ResponseSuccess(res: Response, data: Object) {
         success: true,
         data: data
     });
+    console.log(`[RESPONSE SUCCESS]: IP: ${res.req.ip}, URL: ${res.req.url}, DATA: ${JSON.stringify(data)}`);
 }
 
 export function GetDateFromStr(YYYYMMDD: string): number {
