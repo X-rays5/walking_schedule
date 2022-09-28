@@ -1,5 +1,13 @@
 import {firebase} from "./firebase";
-import {exists} from "fs";
+
+export const DATABASE_READABLE_DATE_FORMAT = 'D-M-YYYY';
+export const DATABASE_DATE_FORMAT = 'YYYYMMDD';
+
+export interface User {
+    name: string,
+    photo: string,
+    role: string
+}
 
 export async function CollectionExists(id: string): Promise<boolean> {
     return await firebase.firestore().collection(id).get().then((collection) => {
@@ -62,11 +70,6 @@ export async function AuthedAdmin(uid: string | undefined): Promise<boolean> {
     }
 }
 
-export interface User {
-    name: string,
-    photo: string,
-    role: string
-}
 export async function GetUser(name: string): Promise<User> {
     const collection = firebase.firestore().collection('users');
 
@@ -81,7 +84,6 @@ export async function GetUser(name: string): Promise<User> {
            };
        } else {
            throw {
-               code: 'auth/user-not-found',
                message: 'There is no user record corresponding to the provided identifier.',
            };
        }

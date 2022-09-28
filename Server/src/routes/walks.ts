@@ -1,10 +1,15 @@
 import {firebase} from "../firebase/firebase";
-import * as firebase_t from 'firebase-admin';
 import express from "express";
-import {Authed, AuthedAdmin, DocExists, IsUserName, SendNotification} from "../firebase/util";
+import {
+    Authed,
+    AuthedAdmin, DATABASE_READABLE_DATE_FORMAT,
+    DocExists,
+    IsUserName,
+    SendNotification
+} from "../firebase/util";
 import date from 'date-and-time';
-import { Response } from "express-serve-static-core";
-import {exists} from "fs";
+import {Response} from 'express';
+import {CheckValidDate, GetDateFromStr, ResponseError, ResponseSuccess} from "../util";
 
 interface Walk {
     walker: string,
@@ -14,98 +19,265 @@ interface Walk {
     id: string
 }
 
-function GetDateFromStr(YYYYMMDD: string): number {
-    return parseInt(date.format(new Date(YYYYMMDD), 'YYYYMMDD'))
-}
-
-function CheckValidDate(YYYYMMDD: string): boolean {
-    const check = GetDateFromStr(YYYYMMDD);
-    return check != undefined && check > 0;
-}
-
-function GetWalksFromTo(res: Response<any, Record<string, any>, number>, from: string, to: string) {
+async function GetWalksFromTo(res: Response, from: string, to: string) {
     const start = GetDateFromStr(from);
     const end = GetDateFromStr(to);
-    firebase.firestore().collection('walks')
+
+    const walk_collection = await firebase.firestore().collection('walks')
         .where('date', '>=', start)
         .where('date', '<=', end)
-        .get().then((doc) => {
-        let walks: Walk[] = [];
-        doc.docs.forEach((val) => {
-            walks.push({
-                walker: val.data().finalwalker,
-                interested: val.data().interested,
-                name: val.data().name,
-                date: val.data().formatteddate,
-                id: val.id
-            })
-        });
-        res.json(walks);
-    }).catch((error) => {
-        console.log(error);
-        res.status(400);
-        res.json({
-            success: false,
-            error: error
-        });
+        .get();
+
+    let walks: Walk[] = [];
+    walk_collection.docs.forEach((val) => {
+        walks.push({
+            walker: val.data().finalwalker,
+            interested: val.data().interested,
+            name: val.data().name,
+            date: val.data().formatteddate,
+            id: val.id
+        })
     });
+
+    ResponseSuccess(res, walks);
 }
 
-function GetWalksOnDayUser(res: Response<any, Record<string, any>, number>, name: string, day: string) {
+async function GetWalksOnDayUser(res: Response, name: string, day: string) {
     const start = GetDateFromStr(day);
-    firebase.firestore().collection('walks')
+
+    const walk_collection = await firebase.firestore().collection('walks')
         .where('finalwalker', '==', name)
         .where('date', '>=', start)
         .where('date', '<=', start)
-        .get().then((doc) => {
-        let walks: Walk[] = [];
-        doc.docs.forEach((val) => {
-            walks.push({
-                walker: val.data().finalwalker,
-                interested: val.data().interested,
-                name: val.data().name,
-                date: val.data().formatteddate,
-                id: val.id
-            })
-        });
-        res.json(walks);
-    }).catch((error) => {
-        console.log(error);
-        res.status(400);
-        res.json({
-            success: false,
-            error: error
-        });
+        .get();
+
+    let walks: Walk[] = [];
+    walk_collection.docs.forEach((val) => {
+        walks.push({
+            walker: val.data().finalwalker,
+            interested: val.data().interested,
+            name: val.data().name,
+            date: val.data().formatteddate,
+            id: val.id
+        })
     });
+
+    ResponseSuccess(res, walks);
 }
 
-function GetWalkFromId(res: Response<any, Record<string, any>, number>, doc_id: string) {
-    firebase.firestore().collection('walks').doc(doc_id).get().then((doc) => {
-        const walk: Walk = {
-            walker: doc.data()?.finalwalker,
-            interested: doc.data()?.interested,
-            name: doc.data()?.name,
-            date: doc.data()?.formatteddate,
-            id: doc.id
-        }
-        res.json(walk);
-    }).catch((error) => {
-        console.log(error);
-        res.status(400);
-        res.json({
-            success: false,
-            error: error
-        });
-    });
+async function GetWalkFromId(res: Response, doc_id: string) {
+    const doc = await firebase.firestore().collection('walks').doc(doc_id).get();
+
+    const walk: Walk = {
+        walker: doc.data()?.finalwalker,
+        interested: doc.data()?.interested,
+        name: doc.data()?.name,
+        date: doc.data()?.formatteddate,
+        id: doc.id
+    }
+
+    ResponseSuccess(res, walk);
 }
 
-function GetWalkFromDate(res: Response<any, Record<string, any>, number>, date: string) {
+async function GetWalkFromDate(res: Response, date: string) {
     const start = GetDateFromStr(date);
-    firebase.firestore().collection('walks')
+    const walks_on_date = await firebase.firestore().collection('walks')
         .where('date', '==', start)
-        .get().then((doc) => {
+        .get();
+    let walks: Walk[] = [];
+    walks_on_date.docs.forEach((val) => {
+        walks.push({
+            walker: val.data().finalwalker,
+            interested: val.data().interested,
+            name: val.data().name,
+            date: val.data().formatteddate,
+            id: val.id
+        })
+    });
+    ResponseSuccess(res, walks);
+}
+
+async function SetUserInterestedInWalk(res: Response, walk_id: string, user_id: string, interested: boolean) {
+    let walk = await firebase.firestore().collection('walks').doc(walk_id).get();
+    if (!walk.exists) {
+        ResponseError(res, 'Walk does not exist', 404);
+        return;
+    }
+
+
+
+    const user = await firebase.auth().getUser(user_id);
+
+    let interested_obj = walk.data()?.interested;
+    // @ts-ignore
+    interested_obj[user.displayName] = interested;
+    await walk.ref.update({interested: interested_obj});
+    walk = await firebase.firestore().collection('walks').doc(walk_id).get();
+
+    await SendNotification(walk.data()?.name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', walk.data());
+    ResponseSuccess(res, {
+        walker: walk.data()?.finalwalker,
+        interested: walk.data()?.interested,
+        name: walk.data()?.name,
+        date: walk.data()?.formatteddate,
+        id: walk.id
+    });
+}
+
+module.exports = function(app: express.Express) {
+    // date are expected as yyyy-MM-DD
+    app.get('/walks/:possibleid', async (req, res) => {
+        try {
+            if (!await Authed(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
+
+            if (await DocExists('walks', req.params.possibleid)) {
+                GetWalkFromId(res, req.params.possibleid);
+            } else {
+                GetWalkFromDate(res, req.params.possibleid);
+            }
+
+        } catch (error: any) {
+            ResponseError(res, error, 500);
+        }
+    });
+
+    app.post('/walks/:date', async (req, res) => {
+        try {
+            if (!await AuthedAdmin(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
+
+            if (!CheckValidDate(req.params.date)) {
+                ResponseError(res, "Invalid date", 400);
+                return;
+            }
+
+            if (req.body.name === undefined || req.body.name === '') {
+                ResponseError(res, "Invalid name", 400);
+                return;
+            }
+
+            const data = {
+                date: GetDateFromStr(req.params.date),
+                finalwalker: 'none',
+                formatteddate: date.format(new Date(req.params.date), DATABASE_READABLE_DATE_FORMAT),
+                interested: {placeholder: false},
+                name: req.body.name
+            }
+
+            await firebase.firestore().collection('walks').add(data);
+
+            await SendNotification(`New Walk on ${data.formatteddate}`, data.name, 'all', data);
+            ResponseSuccess(res, data);
+
+        } catch (error: any) {
+            ResponseError(res, error, 500);
+        }
+    })
+
+    app.patch('walks/:walk_id/date/:date', async (req, res) => {
+        try {
+            if (!await AuthedAdmin(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
+
+            if (!CheckValidDate(req.params.date)) {
+                ResponseError(res, "Invalid date", 400);
+                return;
+            }
+
+            if (!await DocExists('walks', req.params.walk_id)) {
+                ResponseError(res, "Invalid walk", 404);
+                return;
+            }
+
+            let walk = await firebase.firestore().collection('walks').doc(req.params.walk_id).get();
+            if (!walk.exists) {
+                ResponseError(res, "Invalid walk", 404);
+                return;
+            }
+
+            await walk.ref.update({
+                date: GetDateFromStr(req.params.date),
+                formatteddate: date.format(new Date(req.params.date), DATABASE_READABLE_DATE_FORMAT)
+            });
+
+            walk = await firebase.firestore().collection('walks').doc(req.params.walk_id).get()
+            ResponseSuccess(res, {
+                walker: walk.data()?.finalwalker,
+                interested: walk.data()?.interested,
+                name: walk.data()?.name,
+                date: walk.data()?.formatteddate,
+                id: walk.id
+            });
+
+        } catch (error: any) {
+            ResponseError(res, error, 500);
+        }
+    });
+
+    app.delete('/walks/:id', async (req, res) => {
+        try {
+            if (!AuthedAdmin(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
+
+            if (!await DocExists('walks', req.params.id)) {
+                ResponseError(res, "Invalid walk", 404);
+                return;
+            }
+
+            const walk_to_delete = await firebase.firestore().collection('walks').doc(req.params.id).get()
+            await walk_to_delete.ref.delete();
+
+            ResponseSuccess(res, {
+                deleted: true
+            });
+        } catch (error: any) {
+            ResponseError(res, error, 500);
+        }
+    })
+
+    app.get('/walks/:possiblefrom/:to', async (req, res) => {
+        try {
+            if (!await Authed(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
+
+            const test = GetDateFromStr(req.params.possiblefrom);
+            if (test != undefined && test > 0) {
+                await GetWalksFromTo(res, req.params.possiblefrom, req.params.to);
+            } else {
+                await GetWalksOnDayUser(res, req.params.possiblefrom, req.params.to);
+            }
+        } catch (error: any) {
+            ResponseError(res, error, 500);
+        }
+    });
+
+    app.get('/walks/:name/:from/:to', async (req, res) => {
+        try {
+            if (!await Authed(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
+
+            const start = GetDateFromStr(req.params.from);
+            const end = GetDateFromStr(req.params.to);
+            const walk_collection = await firebase.firestore().collection('walks')
+                .where('finalwalker', '==', req.params.name)
+                .where('date', '>=', start)
+                .where('date', '<=', end)
+                .get();
             let walks: Walk[] = [];
-            doc.docs.forEach((val) => {
+            walk_collection.docs.forEach((val) => {
                 walks.push({
                     walker: val.data().finalwalker,
                     interested: val.data().interested,
@@ -114,435 +286,67 @@ function GetWalkFromDate(res: Response<any, Record<string, any>, number>, date: 
                     id: val.id
                 })
             });
-            res.json(walks);
-    }).catch((error) => {
-        console.log(error);
-        res.status(400);
-        res.json({
-            success: false,
-            error: error
-        });
-    });
-}
 
-function SetUserInterestedInWalk(res: Response<any, Record<string, any>, number>, walk_id: string, user_id: string, interested: boolean) {
-    firebase.firestore().collection('walks').doc(walk_id).get().then((walk) => {
-        if (walk.exists) {
-            firebase.auth().getUser(user_id).then((user) => {
-                let interestedobj = walk.data()?.interested;
-                // @ts-ignore
-                interestedobj[user.displayName] = interested;
-                walk.ref.update({
-                    interested: interestedobj
-                }).then((doc) => {
-                    firebase.firestore().collection('walks').doc(walk_id).get().then((updated_walk) => {
-                        res.json({
-                            walker: updated_walk.data()?.finalwalker,
-                            interested: updated_walk.data()?.interested,
-                            name: updated_walk.data()?.name,
-                            date: updated_walk.data()?.formatteddate,
-                            id: updated_walk.id
-                        });
-                    })
-                }).catch((error) => {
-                    console.log(error);
-                    res.status(500);
-                    res.json({
-                        success: false,
-                        error: error
-                    });
-                });
-                SendNotification(walk.data()?.name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', walk.data());
-            }).catch((error) => {
-                console.log(error);
-                res.status(400);
-                res.json({
-                    success: false,
-                    error: error
-                });
-            })
-        } else {
-            res.status(404);
-            res.json({
-                success: false,
-                error: {
-                    code: 'invalid/not-found'
-                }
-            });
-        }
-    }).catch((error) => {
-        console.log(error);
-        res.status(400);
-        res.json({
-            success: false,
-            error: error
-        });
-    });
-}
-
-module.exports = function(app: express.Express) {
-    // date are expected as yyyy-MM-DD
-    app.get('/walks/:possibleid', (req, res) => {
-        try {
-            Authed(req.header('X-API-Uid')).then((authed) => {
-                if (authed) {
-                    DocExists('walks', req.params.possibleid).then((exists) => {
-                        if (exists) {
-                            GetWalkFromId(res, req.params.possibleid);
-                        } else {
-                            GetWalkFromDate(res, req.params.possibleid);
-                        }
-                    })
-                } else {
-                    res.status(403);
-                    res.send();
-                }
-            }).catch((error) => {
-                console.log(error);
-                res.status(400);
-                res.json({
-                    success: false,
-                    error: error
-                });
-            });
-        } catch (error) {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
+            ResponseSuccess(res, walks);
+        } catch (error: any) {
+            ResponseError(res, error, 500);
         }
     });
 
-    app.post('/walks/:date', (req, res) => {
+    app.patch('/walks/:id/interested/:bool', async (req, res) => {
         try {
-            AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
-                if (authed) {
-                    firebase.firestore().collection('users').doc()
-                    if (CheckValidDate(req.params.date)) {
-                        if (req.body.name !== undefined) {
-                            const data = {
-                                date: GetDateFromStr(req.params.date),
-                                finalwalker: 'none',
-                                formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY'),
-                                interested: {placeholder: false},
-                                name: req.body.name
-                            }
-                            firebase.firestore().collection('walks').add(data);
-                            res.json({
-                                walker: data.finalwalker,
-                                interested: data.interested,
-                                name: data.name,
-                                date: data.formatteddate,
-                            });
-                            SendNotification(`New Walk on ${data.formatteddate}`, data.name, 'all', data);
-                        } else {
-                            res.status(400);
-                            res.json({
-                                success: false,
-                                error: {
-                                    code: 'missing/name'
-                                }
-                            })
-                        }
-                    } else {
-                        res.status(400);
-                        res.json({
-                            success: false,
-                            error: {
-                                code: 'invalid/date'
-                            }
-                        })
-                    }
-                } else {
-                    res.status(403);
-                    res.send();
-                }
-            });
-        } catch (error) {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
-        }
-    })
+            if (!await Authed(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
 
-    app.patch('walks/:walk_id/date/:date', (req, res) => {
-       try {
-           if (CheckValidDate(req.params.date)) {
-               AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
-                   if (authed) {
-                       DocExists('walks', req.params.walk_id).then(exists => {
-                           firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((walk) => {
-                               if (walk.exists) {
-                                   walk.ref.update({
-                                        date: GetDateFromStr(req.params.date),
-                                        formatteddate: date.format(new Date(req.params.date), 'D-M-YYYY')
-                                   }).then((doc) => {
-                                            firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((updated_walk) => {
-                                           res.json({
-                                               walker: updated_walk.data()?.finalwalker,
-                                               interested: updated_walk.data()?.interested,
-                                               name: updated_walk.data()?.name,
-                                               date: updated_walk.data()?.formatteddate,
-                                               id: updated_walk.id
-                                           });
-                                       });
-                                   });
-                               } else {
-                                   console.log('walk does not exist');
-                                      res.status(404);
-                                      res.json({
-                                        success: false,
-                                        error: {
-                                             code: 'invalid/not-found'
-                                        }
-                                      });
-                               }
-                           });
-                       });
-                   }
-               });
-           } else {
-                res.status(400);
-                res.json({
-                     success: false,
-                     error: {
-                          code: 'invalid/date'
-                     }
-                });
-           }
-       } catch (error) {
-           console.log(error);
-           res.status(500);
-           res.json({
-               success: false,
-               error: error
-           });
-       }
-    });
-
-    app.delete('/walks/:id', (req, res) => {
-        try {
-            AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
-               if (authed) {
-                   DocExists('walks', req.params.id).then((exists) => {
-                       if (exists) {
-                           firebase.firestore().collection('walks').doc(req.params.id).get().then((doc) => {
-                              doc.ref.delete();
-                              res.json({
-                                  success: true
-                              });
-                           });
-                       } else {
-                           res.status(404);
-                           res.json({
-                               success: false,
-                               error: {
-                                   code: 'invalid/walk-id'
-                               }
-                           })
-                       }
-                   })
-               } else {
-                   res.status(403);
-                   res.send();
-               }
-            });
-        } catch (error) {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
-        }
-    })
-
-    app.get('/walks/:possiblefrom/:to', (req, res) => {
-        try {
-            Authed(req.header('X-API-Uid')).then((authed) => {
-                if (authed) {
-                    const test = GetDateFromStr(req.params.possiblefrom);
-                    if (test != undefined && test > 0) {
-                        GetWalksFromTo(res, req.params.possiblefrom, req.params.to);
-                    } else {
-                        GetWalksOnDayUser(res, req.params.possiblefrom, req.params.to);
-                    }
-                } else {
-                    res.status(403);
-                    res.send();
-                }
-            }).catch((error) => {
-                console.log(error);
-                res.status(400);
-                res.json({
-                    success: false,
-                    error: error
-                });
-            });
-        } catch (error) {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
+            switch (req.params.bool) {
+                case 'true':
+                    SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid')!, true);
+                    break;
+                case 'false':
+                    SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid')!, false);
+                    break;
+                default:
+                    ResponseError(res, "Invalid bool", 400);
+                    break;
+            }
+        } catch (error: any) {
+            ResponseError(res, error, 500);
         }
     });
 
-    app.get('/walks/:name/:from/:to', (req, res) => {
+    app.patch('/walks/:walk_id/walker/:name', async (req, res) => {
         try {
-            Authed(req.header('X-API-Uid')).then((authed) => {
-                if (authed) {
-                    const start = GetDateFromStr(req.params.from);
-                    const end = GetDateFromStr(req.params.to);
-                    firebase.firestore().collection('walks')
-                        .where('finalwalker', '==', req.params.name)
-                        .where('date', '>=', start)
-                        .where('date', '<=', end)
-                        .get().then((doc) => {
-                        let walks: Walk[] = [];
-                        doc.docs.forEach((val) => {
-                            walks.push({
-                                walker: val.data().finalwalker,
-                                interested: val.data().interested,
-                                name: val.data().name,
-                                date: val.data().formatteddate,
-                                id: val.id
-                            })
-                        });
-                        res.json(walks);
-                    }).catch((error) => {
-                        console.log(error);
-                        res.status(400);
-                        res.json({
-                            success: false,
-                            error: error
-                        });
-                    });
-                } else {
-                    res.status(403);
-                    res.send();
-                }
-            }).catch((error) => {
-                console.log(error);
-                res.status(400);
-                res.json({
-                    success: false,
-                    error: error
-                });
-            });
-        } catch (error) {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
-            });
-        }
-    });
+            if (!await AuthedAdmin(req.header('X-API-Uid'))) {
+                ResponseError(res, "Not authorized", 401);
+                return;
+            }
 
-    app.patch('/walks/:id/interested/:bool', (req, res) => {
-       try {
-           Authed(req.header('X-API-Uid')).then((authed) => {
-               if (authed) {
-                   switch (req.params.bool) {
-                       case 'true':
-                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid')!, true);
-                           break;
-                       case 'false':
-                           SetUserInterestedInWalk(res, req.params.id, req.header('X-API-Uid')!, false);
-                           break;
-                       default:
-                           res.status(400);
-                           res.json({
-                               success: false,
-                               error: {
-                                   code: 'invalid/bool'
-                               }
-                           });
-                           break;
-                   }
-               } else  {
-                   res.status(403);
-                   res.send();
-               }
-           });
-       } catch (error) {
-           console.log(error);
-           res.status(400);
-           res.json({
-               success: false,
-               error: error
-           });
-       }
-    });
+            if (!await IsUserName(req.params.name)) {
+                ResponseError(res, "Invalid name", 400);
+                return;
+            }
 
-    app.patch('/walks/:walk_id/walker/:name', (req, res) => {
-        try {
-            AuthedAdmin(req.header('X-API-Uid')).then((authed) => {
-                if (authed) {
-                    IsUserName(req.params.name).then((exists) => {
-                        if (exists) {
-                            firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((walk) => {
-                                if (walk.exists) {
-                                    walk.ref.update({
-                                        finalwalker: req.params.name
-                                    }).then((doc) => {
-                                        firebase.firestore().collection('walks').doc(req.params.walk_id).get().then((updated_walk) => {
-                                            res.json({
-                                                walker: updated_walk.data()?.finalwalker,
-                                                interested: updated_walk.data()?.interested,
-                                                name: updated_walk.data()?.name,
-                                                date: updated_walk.data()?.formatteddate,
-                                                id: updated_walk.id
-                                            });
-                                        })
-                                    }).catch((error) => {
-                                        console.log(error);
-                                        res.status(400);
-                                        res.json({
-                                            success: false,
-                                            error: error
-                                        });
-                                    })
-                                    SendNotification(walk.data()?.name, `${req.params.name} has been set as walker`, 'all', walk.data());
-                                } else {
-                                    res.status(404);
-                                    res.json({
-                                        success: false,
-                                        error: {
-                                            code: 'invalid/not-found'
-                                        }
-                                    });
-                                }
-                            })
-                        } else {
-                            res.status(400);
-                            res.json({
-                                success: false,
-                                error: {
-                                    code: 'invalid/user'
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    res.status(403);
-                    res.send();
-                }
-            })
-        } catch (error) {
-            console.log(error);
-            res.status(400);
-            res.json({
-                success: false,
-                error: error
+            let walk = await firebase.firestore().collection('walks').doc(req.params.walk_id).get();
+            if (!walk.exists) {
+                ResponseError(res, "Invalid walk", 404);
+                return;
+            }
+
+            await walk.ref.update({finalwalker: req.params.name});
+            walk = await firebase.firestore().collection('walks').doc(req.params.walk_id).get();
+
+            await SendNotification(walk.data()?.name, `${req.params.name} has been set as walker`, 'all', walk.data());
+            ResponseSuccess(res, {
+                walker: walk.data()?.finalwalker,
+                interested: walk.data()?.interested,
+                name: walk.data()?.name,
+                date: walk.data()?.formatteddate,
+                id: walk.id
             });
+        } catch (error: any) {
+            ResponseError(res, error, 500);
         }
     })
 }

@@ -29,6 +29,7 @@ if (process.env.FIXLEGACY === 'true') {
 
 import express from 'express';
 import {Request, Response} from 'express';
+import {ResponseError, ResponseSuccess} from "./util";
 const app = express();
 
 const request_logger = (req: Request, res: Response, next: () => void) => {
@@ -46,13 +47,12 @@ require('./routes/walks')(app);
 
 // endpoint to check if api up
 app.get('/', (req, res) => {
-    res.json({'status': 'up'});
+    ResponseSuccess(res, {'status': 'up'});
 })
 
 app.all('*', (req, res) => {
     console.log(`Sending 404 to ${req.ip} to ${req.url}`);
-    res.status(404);
-    res.json({'error': 'invalid/url'});
+    ResponseError(res, 'Invalid URL', 404);
 });
 
 // start the Express server
