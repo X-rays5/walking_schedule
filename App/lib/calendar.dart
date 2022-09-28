@@ -40,14 +40,14 @@ class _CalendarState extends State<Calendar> {
           'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
         });
         setState(() {
-          _is_admin = json.decode(admin.body)['role'] == 'admin';
+          _is_admin = json.decode(admin.body)['data']['role'] == 'admin';
         });
-        if (res.body == '[]') {
+        if (res.body == '[]' || json.decode(res.body)['data'].toString() == '[]') {
           _walks_today = false;
           return json.decode('[{"placeholder": true}]');
         } else {
           _walks_today = true;
-          return json.decode(res.body);
+          return json.decode(res.body)['data'];
         }
       } else {
         showDialog(

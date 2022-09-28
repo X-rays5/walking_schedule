@@ -15,12 +15,15 @@ int createUniqueId() {
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  String title = message.data["title"];
+  String body = message.data["body"];
+
   await AwesomeNotifications().createNotification(
     content: NotificationContent(
       id: createUniqueId(),
       channelKey: 'basic_channel',
-      title: message.notification!.title,
-      body: message.notification!.body,
+      title: title,
+      body: body,
       notificationLayout: NotificationLayout.Default,
     ),
   );
@@ -117,12 +120,15 @@ class _LoginPageState extends State<LoginPage> {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        String title = message.data["title"];
+        String body = message.data["body"];
+
         await AwesomeNotifications().createNotification(
           content: NotificationContent(
             id: createUniqueId(),
             channelKey: 'basic_channel',
-            title: message.notification!.title,
-            body: message.notification!.body,
+            title: title,
+            body: title,
             notificationLayout: NotificationLayout.Default,
           ),
         );
@@ -145,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
           setState(() {
             _authState = AuthState.kLoggedIn;
           });
-          Map<String, dynamic> body = json.decode(res.body);
+          Map<String, dynamic> body = json.decode(res.body)['data'];
           if (body.containsKey('role') && body['role'] == 'admin') {
             _messaging.subscribeToTopic('admin');
           }

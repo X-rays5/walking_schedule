@@ -27,12 +27,13 @@ class _AddWalkState extends State<AddWalk> {
     super.dispose();
   }
 
-  Future<void> _DatePicker(BuildContext context) async {
+
+  Future<void> _DatePicker() async {
     final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime(DateTime.now().year - 2),
-      lastDate: DateTime(DateTime.now().year + 2),
+        context: context,
+        initialDate: _date,
+        firstDate: DateTime(DateTime.now().year - 2),
+        lastDate: DateTime(DateTime.now().year + 2)
     );
     if (picked != null && picked != _date) {
       setState(() {
@@ -106,13 +107,13 @@ class _AddWalkState extends State<AddWalk> {
             controller: _walk_name_controller,
             textAlign: TextAlign.left,
             decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Input walk name',
-              labelText: 'Name'
+                border: OutlineInputBorder(),
+                hintText: 'Input walk name',
+                labelText: 'Name'
             ),
           ),
           TextButton(
-              onPressed: (){_DatePicker(context);},
+              onPressed: () => _DatePicker(),
               child: Row(
                 children: [
                   Text('Date: ${DateFormat('dd-MM-yyyy').format(_date)}'),
@@ -120,7 +121,6 @@ class _AddWalkState extends State<AddWalk> {
                 ],
               )
           ),
-
         ],
       ),
     );

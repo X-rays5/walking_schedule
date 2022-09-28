@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import 'util.dart';
 
@@ -25,26 +27,44 @@ class _WalkViewState extends State<WalkView> {
   late Future<List> _users;
   bool _has_users = false;
 
+  DateTime _selected_date = DateTime.now();
+  final DateTime _first_date = DateTime(DateTime.now().year - 2);
+  final DateTime _last_date = DateTime(DateTime.now().year + 2);
+
   @override
   initState() {
     super.initState();
     _users = _GetUsers();
   }
 
+  Future<void> _DatePicker() async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: _selected_date.add(Duration(hours: 1)),
+        firstDate: _first_date,
+        lastDate: _last_date,
+    );
+    if (picked != null && picked != _selected_date) {
+      setState(() {
+        _selected_date = picked;
+      });
+    }
+  }
+
   Future<List> _GetUsers() async {
     try {
-      var url = Uri.parse('https://api.walking-schedule.scheenen.dev/users/1');
+      var url = Uri.parse('https://api.walking-schedule.scheenen.dev/users/0');
       var res = await http.get(url, headers: {
         'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
       });
       if (res.statusCode == 200) {
-        if (res.body == '[]') {
+        if (res.body == '[]' || json.decode(res.body)['data'].toString() == '[]') {
           _has_users = false;
           // needs to have actual data even if there is nothing
           return json.decode('[{"placeholder": true}]');
         } else {
           _has_users = true;
-          return json.decode(res.body);
+          return json.decode(res.body)['data'];
         }
       } else {
         showDialog(
@@ -72,11 +92,10 @@ class _WalkViewState extends State<WalkView> {
 
   Future<void> _DeleteWalk() async {
     try {
-      var url = Uri.parse(
-          'https://api.walking-schedule.scheenen.dev/walks/${_walk['id']}');
-      var res = await http.delete(
-          url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
+      var url = Uri.parse('https://api.walking-schedule.scheenen.dev/walks/${_walk['id']}');
+      var res = await http.delete(url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
       if (res.statusCode == 200) {
+        if (!mounted) return;
         Navigator.of(context).pop();
       } else {
         showDialog(
@@ -95,16 +114,71 @@ class _WalkViewState extends State<WalkView> {
     }
   }
 
-  Future<void> _Interested(BuildContext context, bool interested) async {
+  Future<void> _ChangeDateSendReq(DateTime date) async {
     try {
-      var url = Uri.parse(
-          'https://api.walking-schedule.scheenen.dev/walks/${_walk['id']}/interested/$interested');
+      var url = Uri.parse('https://api.walking-schedule.scheenen.dev/walks/${_walk['id']}/date/$date');
+      var res = await http.patch(url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
+      if (res.statusCode == 200) {
+
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        Navigator.of(context).pop();
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) =>
+              BuildPopUpDialog(context, 'Error',
+                  'code: ${res.statusCode}\nbody: ${res.body}'),
+        );
+      }
+    } catch (err) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) =>
+            BuildPopUpDialog(context, 'Error', err.toString()),
+      );
+    }
+  }
+
+  Future<void> _ChangeDate() async {
+    await _DatePicker();
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Are you sure?'),
+            content: Text('Are you sure you wan\'t to change the date of ${_walk['name']} to ${DateFormat('dd-MM-yyyy').format(_selected_date)}.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('CANCEL'),
+              ),
+              TextButton(
+                onPressed: () {
+                  //_ChangeDateSendReq(context, picked);
+                  Navigator.of(context).pop();
+                },
+                child: const Text('YES'),
+              ),
+            ],
+          );
+        }
+    );
+  }
+
+  Future<void> _Interested(bool interested) async {
+    try {
+      var url = Uri.parse('https://api.walking-schedule.scheenen.dev/walks/${_walk['id']}/interested/$interested');
       var res = await http.patch(
           url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
       if (res.statusCode == 200) {
         setState(() {
-          _walk = json.decode(res.body);
+          _walk = json.decode(res.body)['data'];
         });
+        if (!mounted) return;
         Navigator.of(context).pop();
       } else {
         showDialog(
@@ -123,7 +197,7 @@ class _WalkViewState extends State<WalkView> {
     }
   }
 
-  Future<void> _SetWalker(BuildContext context, String name) async {
+  Future<void> _SetWalker(String name) async {
     try {
       var url = Uri.parse(
           'https://api.walking-schedule.scheenen.dev/walks/${_walk['id']}/walker/$name');
@@ -131,8 +205,9 @@ class _WalkViewState extends State<WalkView> {
           url, headers: {'X-API-Uid': FirebaseAuth.instance.currentUser!.uid});
       if (res.statusCode == 200) {
         setState(() {
-          _walk = json.decode(res.body);
+          _walk = json.decode(res.body)['data'];
         });
+        if (!mounted) return;
         Navigator.of(context).pop();
       } else {
         showDialog(
@@ -197,14 +272,14 @@ class _WalkViewState extends State<WalkView> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        _Interested(context, false).then((value) {
+                        _Interested(false).then((value) {
                         });
                       },
                       child: const Text('NO'),
                     ),
                     TextButton(
                       onPressed: () {
-                        _Interested(context, true).then((value) {
+                        _Interested(true).then((value) {
                         });
                       },
                       child: const Text('YES'),
@@ -262,7 +337,7 @@ class _WalkViewState extends State<WalkView> {
                                         ),
                                         TextButton(
                                           onPressed: () {
-                                            _SetWalker(context, snapshot.data![i]['name']);
+                                            _SetWalker(snapshot.data![i]['name']);
                                           },
                                           child: const Text('YES'),
                                         ),

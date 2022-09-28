@@ -54,15 +54,15 @@ class _UserViewState extends State<UserView> {
           'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
         });
         setState(() {
-          _is_admin = json.decode(admin.body)['role'] == 'admin';
+          _is_admin = json.decode(admin.body)['data']['role'] == 'admin';
         });
-        if (res.body == '[]') {
+        if (res.body == '[]' || json.decode(res.body)['data'].toString() == '[]') {
           _has_walks = false;
           // needs to have actual data even if there is nothing
           return json.decode('[{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"2-10-2021","id":"Ih0yeumVFsqalPkSZH1A"},{"walker":"Papzakje","interested":["Hans","Piet","Papzakje"],"name":"test walk","date":"10-10-2021","id":"OCKZLq4SWvw65DiMiENx"}]');
         } else {
           _has_walks = true;
-          return json.decode(res.body);
+          return json.decode(res.body)['data'];
         }
       } else {
         showDialog(

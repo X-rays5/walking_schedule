@@ -30,7 +30,7 @@ class _UsersState extends State<Users> {
     });
     if (res.statusCode == 200) {
       _has_users = true;
-      return json.decode(res.body);
+      return json.decode(res.body)['data'];
     } else {
       showDialog(
         context: context,

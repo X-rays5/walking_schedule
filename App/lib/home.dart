@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
           'X-API-Uid': FirebaseAuth.instance.currentUser!.uid
         });
         setState(() {
-          if (json.decode(admin.body)['role'] == 'admin') {
+          if (json.decode(admin.body)['data']['role'] == 'admin') {
             _is_admin = true;
             FirebaseMessaging.instance.subscribeToTopic('admin');
           } else {
@@ -52,12 +52,12 @@ class _HomePageState extends State<HomePage> {
             FirebaseMessaging.instance.unsubscribeFromTopic('admin');
           }
         });
-        if (res.body == '[]') {
+        if (res.body == '[]' || json.decode(res.body)['data'].toString() == '[]') {
           _has_walks = false;
           return json.decode('[{"placeholder": true}]');
         } else {
           _has_walks = true;
-          return json.decode(res.body);
+          return json.decode(res.body)['data'];
         }
       } else {
         showDialog(
