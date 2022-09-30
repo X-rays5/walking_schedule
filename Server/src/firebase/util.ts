@@ -90,15 +90,40 @@ export async function GetUser(name: string): Promise<User> {
     });
 }
 
-export async function SendNotification(title: string, body: string, topic: string, data: any) {
-    data.title = title;
-    data.body = body;
-    const message = {
-        data: data,
-        topic: topic
-    };
-    return await firebase.messaging().send(message)
-        .then((response) => {
-            return response;
-        })
+export async function SendNotification(title: string, body: string, topic: string, data?: any) {
+        if (data === undefined) {
+            data = {};
+        } else {
+            for (const key in data) {
+                if (key === 'title' || key === 'body' || key === 'topic') {
+                    throw {
+                        message: 'Data cannot contain "title", "body" or "topic" keys.'
+                    }
+                }
+
+                if (data.hasOwnProperty(key)) {
+                    const element = data[key];
+                    if (typeof element === 'string') {
+                        data[key] = element;
+                    } else if (typeof element === 'number') {
+                        data[key] = element.toString();
+                    } else if (element instanceof Date) {
+                        data[key] = element.toISOString();
+                    } else {
+                        delete data[key];
+                    }
+                }
+            }
+        }
+
+        data.title = title;
+        data.body = body;
+        const message = {
+            data: data,
+            topic: topic
+        };
+        return await firebase.messaging().send(message)
+            .then((response) => {
+                return response;
+            })
 }
