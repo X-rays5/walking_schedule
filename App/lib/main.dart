@@ -128,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
             id: createUniqueId(),
             channelKey: 'basic_channel',
             title: title,
-            body: title,
+            body: body,
             notificationLayout: NotificationLayout.Default,
           ),
         );
