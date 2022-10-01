@@ -29,6 +29,7 @@ if (process.env.FIXLEGACY === 'true') {
 
 import express from 'express';
 import {Request, Response} from 'express';
+import {SendQueuedNotification} from "./firebase/util";
 import {ResponseError, ResponseSuccess} from "./util";
 const app = express();
 
@@ -60,3 +61,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log( `server started at http://localhost:${PORT}` );
 });
+
+setInterval(() => {
+    SendQueuedNotification();
+}, 5000);
