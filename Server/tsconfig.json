@@ -2,14 +2,16 @@
     "compileOnSave": true,
     "compilerOptions": {
         "module": "commonjs",
+        "lib": ["es5", "es6", "dom"],
+        "rootDir": "src",
+        "sourceRoot": "src",
+        "outDir": "build",
         "esModuleInterop": true,
         "target": "es6",
         "noImplicitAny": true,
+        "removeComments": true,
         "moduleResolution": "node",
         "sourceMap": true,
-        "outDir": "dist",
-        "baseUrl": ".",
-        "rootDir": "src",
         "strict": true
     },
 }

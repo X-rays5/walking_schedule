@@ -33,13 +33,13 @@ import {SendQueuedNotification} from "./firebase/util";
 import {ResponseError, ResponseSuccess} from "./util";
 const app = express();
 
-const request_logger = (req: Request, res: Response, next: () => void) => {
+const REQUEST_LOGGER = (req: Request, res: Response, next: () => void) => {
     console.log(`Receiving request from ${req.ip} to ${req.url}`);
     next();
 };
 
 app.use(express.json())
-app.use(request_logger);
+app.use(REQUEST_LOGGER);
 app.set('trust proxy', true);
 
 // import all routes
@@ -56,11 +56,12 @@ app.all('*', (req, res) => {
     ResponseError(res, 'Invalid URL', 404);
 });
 
-// start the Express server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log( `server started at http://localhost:${PORT}` );
+const port = process.env.PORT || 8080
+app.listen(port, () => {
+  console.log("Running on port ", port);
 });
+
+module.exports = app;
 
 setInterval(() => {
     SendQueuedNotification();
