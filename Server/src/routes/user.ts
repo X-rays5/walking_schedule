@@ -62,8 +62,8 @@ module.exports = function(app: express.Express) {
             if (user_doc.exists) {
                 ResponseSuccess(res, {
                     username: user_doc.data()?.name,
-                    photo: user_doc.data()?.name,
-                    role: user_doc.data()?.name,
+                    photo: user_doc.data()?.photo,
+                    role: user_doc.data()?.role,
                 });
             } else {
                 const data = {
