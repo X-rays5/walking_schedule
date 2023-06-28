@@ -31,7 +31,7 @@ module.exports = function(app: express.Express) {
                 .where('date', '<=', end_date)
                 .get();
 
-            let walks: Walk[] = [];
+            const walks: Walk[] = [];
             this_month_walks.docs.forEach((val) => {
                 walks.push({
                     walker: val.data().finalwalker,
@@ -63,6 +63,7 @@ module.exports = function(app: express.Express) {
                 ResponseSuccess(res, {
                     username: user_doc.data()?.name,
                     photo: user_doc.data()?.photo,
+                    uid: user_doc.data()?.uid,
                     role: user_doc.data()?.role,
                 });
             } else {
