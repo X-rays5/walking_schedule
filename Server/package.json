@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.ts",
     "build": "tsc",
-    "prod": "node dist/index.js",
+    "prod": "node build/index.js",
     "dev": "nodemon src/index.ts",
     "server": "ts-node src/index.ts",
     "start-dev": "ts-node src/index.ts"
