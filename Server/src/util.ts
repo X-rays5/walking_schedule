@@ -32,3 +32,12 @@ export function CheckValidDate(YYYYMMDD: string): boolean {
     const check = GetDateFromStr(YYYYMMDD);
     return check !== undefined && check > 0;
 }
+
+export function ObjectToFCMData(obj: object): { [key: string]: string; } {
+    const data: { [key: string]: string; } = {};
+    Object.keys(obj).forEach((key) => {
+        // @ts-ignore
+        data[key] = obj[key].toString();
+    });
+    return data;
+}

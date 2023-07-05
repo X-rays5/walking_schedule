@@ -12,5 +12,6 @@
 **/*adminsdk*.json
 **/dist
 **/package-lock.json
+**/pnpm-lock.yaml
 **/Generated*
 .vercel

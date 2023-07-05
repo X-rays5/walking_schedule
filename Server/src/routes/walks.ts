@@ -9,7 +9,7 @@ import {
 } from "../firebase/util";
 import date from 'date-and-time';
 import {Response} from 'express';
-import {CheckValidDate, GetDateFromStr, ResponseError, ResponseSuccess} from "../util";
+import {CheckValidDate, GetDateFromStr, ObjectToFCMData, ResponseError, ResponseSuccess} from "../util";
 
 interface Walk {
     walker: string,
@@ -156,6 +156,7 @@ module.exports = function(app: express.Express) {
                 return;
             }
 
+            console.log(req.body)
             if (req.body.name === undefined || req.body.name === '') {
                 ResponseError(res, "Invalid name", 400);
                 return;
@@ -171,7 +172,7 @@ module.exports = function(app: express.Express) {
 
             await firebase.firestore().collection('walks').add(data);
 
-            await SendNotification('all', {title: `New Walk on ${data.formatteddate}`, body: data.name, data: JSON.parse(JSON.stringify(data))});
+            await SendNotification('all', {title: `New Walk on ${data.formatteddate}`, body: data.name, data: ObjectToFCMData(data)});
             ResponseSuccess(res, data);
 
         } catch (error: any) {
