@@ -114,7 +114,7 @@ async function SetUserInterestedInWalk(res: Response, walk_id: string, user_id: 
     await walk.ref.update({interested: interested_obj});
     walk = await firebase.firestore().collection('walks').doc(walk_id).get();
 
-    await SendNotification(walk.data()?.name, `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, 'admin', walk.data());
+    await SendNotification('admin', {title: walk.data()?.name, body: `${user.displayName} is now ${interested ? 'interested' : 'not interested'}`, data: walk.data()});
     ResponseSuccess(res, {
         walker: walk.data()?.finalwalker,
         interested: walk.data()?.interested,
@@ -171,7 +171,7 @@ module.exports = function(app: express.Express) {
 
             await firebase.firestore().collection('walks').add(data);
 
-            await SendNotification(`New Walk on ${data.formatteddate}`, data.name, 'all', data);
+            await SendNotification('all', {title: `New Walk on ${data.formatteddate}`, body: data.name, data: JSON.parse(JSON.stringify(data))});
             ResponseSuccess(res, data);
 
         } catch (error: any) {
@@ -337,7 +337,7 @@ module.exports = function(app: express.Express) {
             await walk.ref.update({finalwalker: req.params.name});
             walk = await firebase.firestore().collection('walks').doc(req.params.walk_id).get();
 
-            await SendNotification(walk.data()?.name, `${req.params.name} has been set as walker`, 'all', walk.data());
+            await SendNotification('all', {title: walk.data()?.name, body: `${req.params.name} has been set as walker`, data: walk.data()});
             ResponseSuccess(res, {
                 walker: walk.data()?.finalwalker,
                 interested: walk.data()?.interested,

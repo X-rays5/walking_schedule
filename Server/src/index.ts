@@ -29,7 +29,6 @@ if (process.env.FIXLEGACY === 'true') {
 
 import express from 'express';
 import {Request, Response} from 'express';
-import {SendQueuedNotification} from "./firebase/util";
 import {ResponseError, ResponseSuccess} from "./util";
 const app = express();
 
@@ -62,7 +61,3 @@ app.listen(port, () => {
 });
 
 module.exports = app;
-
-setInterval(() => {
-    SendQueuedNotification();
-}, 5000);
