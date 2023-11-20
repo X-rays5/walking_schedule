@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:optimized_cached_image/optimized_cached_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:quiver/time.dart';
 import 'package:http/http.dart' as http;
 import 'package:walking_schedule/util.dart';
@@ -136,7 +136,7 @@ class _UserViewState extends State<UserView> {
             accountName: Text(_username),
             accountEmail: Text(_role),
             currentAccountPicture: CircleAvatar(
-              child: OptimizedCacheImage(
+              child: CachedNetworkImage(
               imageUrl: _photo,
               placeholder: (context, url) => const CircularProgressIndicator(),
               errorWidget: (context, url, error) => const Icon(Icons.error),

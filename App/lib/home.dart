@@ -3,7 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:optimized_cached_image/optimized_cached_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:quiver/time.dart';
 
@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
               accountName: Text(_firebaseAuth.currentUser!.displayName!),
               accountEmail: Text(_firebaseAuth.currentUser!.email!),
               currentAccountPicture: CircleAvatar(
-                child: OptimizedCacheImage(
+                child: CachedNetworkImage(
                   imageUrl: _firebaseAuth.currentUser!.photoURL!,
                   placeholder: (context, url) => const CircularProgressIndicator(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),

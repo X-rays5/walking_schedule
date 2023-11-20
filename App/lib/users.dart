@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:optimized_cached_image/optimized_cached_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'util.dart';
 import 'user_view.dart';
@@ -86,7 +86,7 @@ class _UsersState extends State<Users> {
                               title: Text(snapshot.data![i]['name']),
                               subtitle: Text(snapshot.data![i]['role']),
                               leading: CircleAvatar(
-                                child: OptimizedCacheImage(
+                                child: CachedNetworkImage(
                                   imageUrl: snapshot.data![i]['photo'],
                                   placeholder: (context, url) => const CircularProgressIndicator(),
                                   errorWidget: (context, url, error) => const Icon(Icons.error),

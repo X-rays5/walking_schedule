@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -15,6 +16,12 @@ int createUniqueId() {
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  if (message.data.isEmpty) {
+    return;
+  }
+
+  debugPrint('onMessage');
+
   String title = message.data["title"];
   String body = message.data["body"];
 
@@ -31,19 +38,29 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   AwesomeNotifications().initialize('resource://drawable/logo',
     [
       NotificationChannel(
+        channelGroupKey: 'all_notifications_group',
         channelKey: 'basic_channel',
-        channelName: 'Basic Notifications',
+        channelName: 'Notifications',
+        channelDescription: 'All app notifications are received with this channel',
         defaultColor: Colors.black,
-        importance: NotificationImportance.Max,
+        importance: NotificationImportance.High,
+        ledColor: Colors.green,
         channelShowBadge: true,
-        channelDescription: '',
       ),
-    ],);
+    ],
+    channelGroups: [
+      NotificationChannelGroup(
+          channelGroupKey: 'all_notifications_group',
+          channelGroupName: 'All notifications')
+    ]
+  );
   runApp(const App());
 }
 
@@ -105,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessageOpenedApp.listen((message) async {
-      print('clicked');
+      debugPrint('clicked');
     });
 
     NotificationSettings settings = await _messaging.requestPermission(
@@ -120,6 +137,11 @@ class _LoginPageState extends State<LoginPage> {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        if (message.data.isEmpty) {
+          return;
+        }
+        debugPrint('onMessage');
+
         String title = message.data["title"];
         String body = message.data["body"];
 
@@ -191,6 +213,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     _authState = firebaseAuth.currentUser != null ? AuthState.kLoggedIn : AuthState.kLoggedOut;
+
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
 
     switch (_authState) {
       case AuthState.kLoggedIn:

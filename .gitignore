@@ -15,3 +15,5 @@
 **/pnpm-lock.yaml
 **/Generated*
 .vercel
+**/firebase_options.dart
+**/firebase_app_id_file.json
